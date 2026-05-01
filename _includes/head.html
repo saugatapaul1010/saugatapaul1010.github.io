@@ -1,0 +1,110 @@
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  {%- seo -%}
+  <link rel="stylesheet" href="{{ "/assets/main.css" | relative_url }}">
+  {%- feed_meta -%}
+  {%- if jekyll.environment == 'production' and site.google_analytics -%}
+    {%- include google-analytics.html -%}
+  {%- endif -%}
+
+  <style>
+  /* ─────────────────────────────────────────────────────────────────
+     Custom typography + section spacing overrides
+     Goal: each heading is visibly bold with generous vertical breathing
+     room from the preceding section, so the eye finds new sections fast.
+     ───────────────────────────────────────────────────────────────── */
+
+  .post-content {
+    line-height: 1.65;
+  }
+
+  .post-content h1 {
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-top: 3.2em;
+    margin-bottom: 0.8em;
+    padding-top: 0.4em;
+    border-top: 2px solid rgba(0,0,0,0.08);
+  }
+
+  .post-content h2 {
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    font-size: 1.85em;
+    margin-top: 2.8em;
+    margin-bottom: 0.7em;
+    padding-top: 0.6em;
+    border-top: 1px solid rgba(0,0,0,0.10);
+  }
+
+  .post-content > h2:first-child,
+  .post-content > h2:first-of-type {
+    margin-top: 1.5em;
+    padding-top: 0;
+    border-top: none;
+  }
+
+  .post-content h3 {
+    font-weight: 700;
+    margin-top: 2em;
+    margin-bottom: 0.5em;
+  }
+
+  .post-content h4,
+  .post-content h5,
+  .post-content h6 {
+    font-weight: 700;
+    margin-top: 1.6em;
+    margin-bottom: 0.4em;
+  }
+
+  .post-content p { margin-bottom: 1.1em; }
+  .post-content ul, .post-content ol { margin-bottom: 1.3em; }
+  .post-content li { margin-bottom: 0.4em; }
+
+  .post-content pre,
+  .post-content figure.highlight {
+    margin-top: 1.2em;
+    margin-bottom: 1.6em;
+  }
+
+  .post-content blockquote {
+    margin-top: 1.4em;
+    margin-bottom: 1.6em;
+    font-style: italic;
+  }
+
+  .post-content hr {
+    margin-top: 2.4em;
+    margin-bottom: 2.4em;
+    border: 0;
+    border-top: 1px solid rgba(0,0,0,0.10);
+  }
+
+  .post-content table {
+    margin-top: 1em;
+    margin-bottom: 1.6em;
+  }
+
+  .post-content h1,
+  .post-content h2,
+  .post-content h3,
+  .post-content h4 {
+    scroll-margin-top: 1.5em;
+  }
+
+  .post-content p > img,
+  .post-content > img {
+    margin-top: 1.2em;
+    margin-bottom: 1.4em;
+    border-radius: 6px;
+  }
+
+  .post-content figure {
+    margin: 1.4em 0 1.6em 0;
+  }
+  </style>
+</head>
