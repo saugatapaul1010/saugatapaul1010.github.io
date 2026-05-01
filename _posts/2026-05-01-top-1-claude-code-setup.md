@@ -2333,5 +2333,3 @@ If you've read this far, you're probably the kind of engineer who has opinions -
 - 🐙 **GitHub** - [github.com/saugatapaul1010](https://github.com/saugatapaul1010)
 
 If you have a fantastic suggestion, please don't keep it to yourself - drop it in any of the channels above and I'll fold it back into a future revision so the whole community benefits. Good setups belong in the open.
-
-*Questions, corrections, or war stories - same address as above.*
