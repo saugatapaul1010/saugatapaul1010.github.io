@@ -66,7 +66,7 @@ Today, that setup is:
 - a knowledge graph that auto-regenerates on every commit
 - a `project-bootstrap` skill that scaffolds a brand-new repo into all of the above in thirty seconds
 
-The whole thing — every layer above plus my personal session archive — sits in roughly 65 MB on my disk. The *open-source infrastructure subset* (hooks, skills, generic agents, statusline, the team-plugin scaffold) is **under 1 MB** as a tarball. I can transplant either onto a new laptop and be productive again in minutes.
+The whole thing -every layer above plus my personal session archive -sits in roughly 65 MB on my disk. The *open-source infrastructure subset* (hooks, skills, generic agents, statusline, the team-plugin scaffold) is **under 1 MB** as a tarball. I can transplant either onto a new laptop and be productive again in minutes.
 
 ### What you actually get out of this - concretely, in benefits, not features
 
@@ -1976,9 +1976,9 @@ The layers stack: the safety net protects you, the statusline informs you, the m
 
 ## 13. Live demo: watch the system build a real app in under an hour.
 
-The post above describes the *infrastructure*. This section shows the *workflow* — what happens when that infrastructure is pointed at a brand-new project.
+The post above describes the *infrastructure*. This section shows the *workflow* -what happens when that infrastructure is pointed at a brand-new project.
 
-The prompt below — `PROJECT_BRIEF.md` — is what I paste into a fresh Claude Code session to build a photographer's portfolio app from scratch: backend (FastAPI + Pydantic + SQLModel + Pillow), frontend (Vite + React + TS + Tailwind + Framer Motion), tests (pytest + Playwright + Lighthouse), CI/CD (GitHub Actions, pinned action versions), GitHub repo (auto-created), local deploy (background uvicorn + vite preview), URL handoff. **One prompt, ~58 minutes wall clock, zero clicks beyond plan approval.**
+The prompt below -`PROJECT_BRIEF.md` -is what I paste into a fresh Claude Code session to build a photographer's portfolio app from scratch: backend (FastAPI + Pydantic + SQLModel + Pillow), frontend (Vite + React + TS + Tailwind + Framer Motion), tests (pytest + Playwright + Lighthouse), CI/CD (GitHub Actions, pinned action versions), GitHub repo (auto-created), local deploy (background uvicorn + vite preview), URL handoff. **One prompt, ~58 minutes wall clock, zero clicks beyond plan approval.**
 
 ![Photography Dashboard build flow](/diagrams/16-photography-dashboard-flow.png)
 
@@ -1986,15 +1986,15 @@ The prompt below — `PROJECT_BRIEF.md` — is what I paste into a fresh Claude 
 
 The flow above maps every event to the system layer that produced it.
 
-- **Phase A — Plan mode (~12 min).** Pure deliberation. Pre-flight reads cwd / git status / port availability / pypi+npm+github reachability. Then `superpowers:brainstorming`, then `superpowers:writing-plans`, then a Gemini MCP red-team on the plan. *Zero* files written, *zero* GitHub repo, *zero* code yet.
-- **Phase B — Bootstrap (~5 min).** The moment after I click "Yes, proceed", the `project-bootstrap` skill scaffolds the project files (project-level `CLAUDE.md`, `.claude/workbooks/`, `.githooks/post-commit` for graphify auto-regen). Then `git init` → `gh repo create --private --push`. The GitHub repo materializes around T+13:30. A fresh `.venv/` is created — pip never touches system Python. Vite scaffolds `web/`. Two commits land.
-- **Phase C — Parallel implementation (~28 min).** `superpowers:dispatching-parallel-agents` fans out three Tasks in one Claude turn: `backend-specialist` (FastAPI + 8 endpoints + EXIF + thumbs + comments + pytest), `frontend-specialist` (gallery + lightbox-with-focus-trap + stats + comments + vitest), `devops-specialist` (`.github/workflows/ci.yml` + scripts + README). After each slice → `code-reviewer-generic` → commit → push. Every push triggers GitHub Actions CI on the workflow file written earlier in the same phase.
-- **Phase D — Verification (~12 min, sequential).** Servers boot in the background (`nohup`, logs in `.logs/`), thumb warmup generates 55 PNGs, Playwright MCP runs the smoke + regression suites with `document.fonts.ready` waits and 2% pixel-diff tolerance, Lighthouse runs ×3 (median), `gh run list` polls CI.
-- **Phase E — URL handoff (~1 min).** All 23 quality gates printed green, then the `🟢 LIVE` block with frontend / API docs / repo / CI URLs.
+- **Phase A -Plan mode (~12 min).** Pure deliberation. Pre-flight reads cwd / git status / port availability / pypi+npm+github reachability. Then `superpowers:brainstorming`, then `superpowers:writing-plans`, then a Gemini MCP red-team on the plan. *Zero* files written, *zero* GitHub repo, *zero* code yet.
+- **Phase B -Bootstrap (~5 min).** The moment after I click "Yes, proceed", the `project-bootstrap` skill scaffolds the project files (project-level `CLAUDE.md`, `.claude/workbooks/`, `.githooks/post-commit` for graphify auto-regen). Then `git init` → `gh repo create --private --push`. The GitHub repo materializes around T+13:30. A fresh `.venv/` is created -pip never touches system Python. Vite scaffolds `web/`. Two commits land.
+- **Phase C -Parallel implementation (~28 min).** `superpowers:dispatching-parallel-agents` fans out three Tasks in one Claude turn: `backend-specialist` (FastAPI + 8 endpoints + EXIF + thumbs + comments + pytest), `frontend-specialist` (gallery + lightbox-with-focus-trap + stats + comments + vitest), `devops-specialist` (`.github/workflows/ci.yml` + scripts + README). After each slice → `code-reviewer-generic` → commit → push. Every push triggers GitHub Actions CI on the workflow file written earlier in the same phase.
+- **Phase D -Verification (~12 min, sequential).** Servers boot in the background (`nohup`, logs in `.logs/`), thumb warmup generates 55 PNGs, Playwright MCP runs the smoke + regression suites with `document.fonts.ready` waits and 2% pixel-diff tolerance, Lighthouse runs ×3 (median), `gh run list` polls CI.
+- **Phase E -URL handoff (~1 min).** All 23 quality gates printed green, then the `🟢 LIVE` block with frontend / API docs / repo / CI URLs.
 
 ### The full prompt
 
-The full `PROJECT_BRIEF.md` lives in the open-source repo: **[`examples/photography-dashboard/PROJECT_BRIEF.md`](https://github.com/saugatapaul1010/claude-code-top1-setup/blob/main/examples/photography-dashboard/PROJECT_BRIEF.md)** — read it on GitHub or paste the raw file directly into a new Claude Code session.
+The full `PROJECT_BRIEF.md` lives in the open-source repo: **[`examples/photography-dashboard/PROJECT_BRIEF.md`](https://github.com/saugatapaul1010/claude-code-top1-setup/blob/main/examples/photography-dashboard/PROJECT_BRIEF.md)** -read it on GitHub or paste the raw file directly into a new Claude Code session.
 
 > ```bash
 > # Quick fetch
@@ -2324,7 +2324,7 @@ Build something good with it.
 The infrastructure half of this post is open-source. Two install paths:
 
 ```bash
-# Path A: clone + install (recommended — read what you're installing first)
+# Path A: clone + install (recommended -read what you're installing first)
 git clone https://github.com/saugatapaul1010/claude-code-top1-setup
 cd claude-code-top1-setup
 ./install.sh        # backs up your existing ~/.claude/ first
@@ -2339,9 +2339,9 @@ cd claude-code-top1-setup && ./install.sh
 - 4 lifecycle hooks · 223-line statusline · sanitized `CLAUDE.md` + `settings.json`
 - 11 generic specialist agents (backend, frontend, devops, security, code-review, ai-engineer, test-writer, etc.)
 - 5 skills (`project-bootstrap`, `graphify`, `drawio-architect`, `manim-animator`, `karpathy-guidelines`)
-- A 4-tier **team-plugin scaffold** (24 agent stubs, 4 skill stubs, 8 shared docs) — *structure preserved, bodies blank for you to fill in with your own domain*
+- A 4-tier **team-plugin scaffold** (24 agent stubs, 4 skill stubs, 8 shared docs) -*structure preserved, bodies blank for you to fill in with your own domain*
 
-**What's NOT in the tarball:** the actual hft-team agent content (24 specialist agents tied to a real trading codebase) — that's proprietary IP. You inherit the *shape* of the four-tier hierarchy; you write the *content* for whatever domain you work in.
+**What's NOT in the tarball:** the actual hft-team agent content (24 specialist agents tied to a real trading codebase) -that's proprietary IP. You inherit the *shape* of the four-tier hierarchy; you write the *content* for whatever domain you work in.
 
 The installer auto-backs up your existing `~/.claude/` to `~/.claude.backup-<timestamp>/` before touching anything, so rolling back is one `mv` away.
 
