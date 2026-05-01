@@ -13,6 +13,33 @@ image: /diagrams/00-cover.png
 
 ---
 
+## Table of Contents
+
+- [1. Why this post exists.](#1-why-this-post-exists)
+- [2. Layer 0 - What default Claude Code already gives you.](#2-layer-0---what-default-claude-code-already-gives-you)
+- [3. Layer 1 - The safety net: hooks + permission deny rules.](#3-layer-1---the-safety-net-hooks--permission-deny-rules)
+- [4. Layer 2 - The statusline: real-time awareness.](#4-layer-2---the-statusline-real-time-awareness)
+- [5. Layer 3 - Memory architecture.](#5-layer-3---memory-architecture)
+- [6. Layer 4 - Skills: the verbs.](#6-layer-4---skills-the-verbs)
+- [7. Layer 5 - Agents: the specialists.](#7-layer-5---agents-the-specialists)
+- [8. Layer 6 - MCP servers: external minds.](#8-layer-6---mcp-servers-external-minds)
+- [9. Layer 7 - The plugin ecosystem.](#9-layer-7---the-plugin-ecosystem)
+- [10. Layer 8 - `project-bootstrap`: the day-1 workflow.](#10-layer-8---project-bootstrap-the-day-1-workflow)
+- [11. Layer 9 - Backup, replication, and the portable kit.](#11-layer-9---backup-replication-and-the-portable-kit)
+- [12. Layer 10 - A day in the life.](#12-layer-10---a-day-in-the-life)
+- [13. Live demo: watch the system build a real app in under an hour.](#13-live-demo-watch-the-system-build-a-real-app-in-under-an-hour)
+- [14. Best practices - the do's, the don'ts, and how the mechanism actually works.](#14-best-practices---the-dos-the-donts-and-how-the-mechanism-actually-works)
+- [15. Key takeaways - what to remember if you only remember nine things.](#15-key-takeaways---what-to-remember-if-you-only-remember-nine-things)
+- [16. Appendix A - Full file index.](#16-appendix-a---full-file-index)
+- [17. Appendix B - Troubleshooting.](#17-appendix-b---troubleshooting)
+- [18. Appendix C - Extending with your own custom agent / skill / MCP.](#18-appendix-c---extending-with-your-own-custom-agent--skill--mcp)
+- [19. Closing.](#19-closing)
+- [20. Get the setup.](#20-get-the-setup)
+- [21. Thank you, and a few names.](#21-thank-you-and-a-few-names)
+- [22. Got a better idea? Tell me.](#22-got-a-better-idea-tell-me)
+
+---
+
 ## 1. Why this post exists.
 
 I had a small heart attack on a Sunday afternoon.
@@ -108,32 +135,6 @@ It is **not** "10 tips for better Claude Code." It is the entire stack as a sing
 
 ---
 
-## Table of Contents
-
-- [1. Why this post exists.](#1-why-this-post-exists)
-- [2. Layer 0 - What default Claude Code already gives you.](#2-layer-0---what-default-claude-code-already-gives-you)
-- [3. Layer 1 - The safety net: hooks + permission deny rules.](#3-layer-1---the-safety-net-hooks--permission-deny-rules)
-- [4. Layer 2 - The statusline: real-time awareness.](#4-layer-2---the-statusline-real-time-awareness)
-- [5. Layer 3 - Memory architecture.](#5-layer-3---memory-architecture)
-- [6. Layer 4 - Skills: the verbs.](#6-layer-4---skills-the-verbs)
-- [7. Layer 5 - Agents: the specialists.](#7-layer-5---agents-the-specialists)
-- [8. Layer 6 - MCP servers: external minds.](#8-layer-6---mcp-servers-external-minds)
-- [9. Layer 7 - The plugin ecosystem.](#9-layer-7---the-plugin-ecosystem)
-- [10. Layer 8 - `project-bootstrap`: the day-1 workflow.](#10-layer-8---project-bootstrap-the-day-1-workflow)
-- [11. Layer 9 - Backup, replication, and the portable kit.](#11-layer-9---backup-replication-and-the-portable-kit)
-- [12. Layer 10 - A day in the life.](#12-layer-10---a-day-in-the-life)
-- [13. Live demo: watch the system build a real app in under an hour.](#13-live-demo-watch-the-system-build-a-real-app-in-under-an-hour)
-- [14. Best practices - the do's, the don'ts, and how the mechanism actually works.](#14-best-practices---the-dos-the-donts-and-how-the-mechanism-actually-works)
-- [15. Key takeaways - what to remember if you only remember nine things.](#15-key-takeaways---what-to-remember-if-you-only-remember-nine-things)
-- [16. Appendix A - Full file index.](#16-appendix-a---full-file-index)
-- [17. Appendix B - Troubleshooting.](#17-appendix-b---troubleshooting)
-- [18. Appendix C - Extending with your own custom agent / skill / MCP.](#18-appendix-c---extending-with-your-own-custom-agent--skill--mcp)
-- [19. Closing.](#19-closing)
-- [20. Get the setup.](#20-get-the-setup)
-- [21. Thank you, and a few names.](#21-thank-you-and-a-few-names)
-- [22. Got a better idea? Tell me.](#22-got-a-better-idea-tell-me)
-
----
 
 ## 2. Layer 0 - What default Claude Code already gives you.
 
