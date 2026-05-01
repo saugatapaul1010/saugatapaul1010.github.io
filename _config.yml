@@ -1,6 +1,7 @@
-title: "The Top-1% Claude Code Setup — Preview"
-description: "Private local preview"
+title: "Saugata Paul"
+description: "Engineer · Writing about Claude Code, agentic AI, and engineering discipline."
 author: Saugata Paul
+url: "https://saugatapaul1010.github.io"
 markdown: kramdown
 kramdown:
   input: GFM
