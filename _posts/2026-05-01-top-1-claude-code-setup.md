@@ -122,10 +122,15 @@ It is **not** "10 tips for better Claude Code." It is the entire stack as a sing
 - [Layer 8 - `project-bootstrap`: the day-1 workflow](#layer-8--project-bootstrap-the-day-1-workflow)
 - [Layer 9 - Backup, replication, and the portable kit](#layer-9--backup-replication-and-the-portable-kit)
 - [Layer 10 - A day in the life](#layer-10--a-day-in-the-life)
-- [Closing - what it costs, what it doesn't, what's next](#closing)
+- [Live demo: watch the system build a real app in under an hour](#live-demo-watch-the-system-build-a-real-app-in-under-an-hour)
+- [Best practices - the do's, the don'ts, and how the mechanism actually works](#best-practices--the-dos-the-donts-and-how-the-mechanism-actually-works)
+- [Key takeaways - what to remember if you only remember nine things](#key-takeaways--what-to-remember-if-you-only-remember-nine-things)
 - [Appendix A - Full file index](#appendix-a--full-file-index)
 - [Appendix B - Troubleshooting](#appendix-b--troubleshooting)
 - [Appendix C - Extending with your own custom agent / skill / MCP](#appendix-c--extending)
+- [Closing - what it costs, what it doesn't, what's next](#closing)
+- [Get the setup](#get-the-setup)
+- [Got a better idea? Tell me.](#got-a-better-idea-tell-me)
 
 ---
 
