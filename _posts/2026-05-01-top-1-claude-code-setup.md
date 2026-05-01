@@ -1967,332 +1967,13 @@ The layers stack: the safety net protects you, the statusline informs you, the m
 
 ---
 
-## Best practices - the do's, the don'ts, and how the mechanism actually works
-
-Before the closing, a working developer's reference card. These are the patterns I keep coming back to, distilled from two-plus years of watching the setup do well and watching it do badly. Use this section as the lookup table you'd staple to your monitor.
-
-### The mechanism, in one paragraph
-
-Every layer in this post is a different way of **keeping Claude's context window stable, focused, and useful**. The safety net (Layer 1) keeps Claude from doing irreversible things while it's working in your context. The statusline (Layer 2) keeps *you* honest about what's in the context - how full it is, how warm the cache is, what it's costing. The memory ladder (Layer 3) keeps the context *continuous* across sessions: what was loaded yesterday is reachable today without re-explanation. Skills (Layer 4) keep the context *procedural* - invoking a skill is loading a recipe Claude executes verbatim. Agents (Layer 5) keep the context *narrow*: each specialist holds only the slice it can verify. MCPs (Layer 6) extend the context *outward* - to other models, other tools, external state. Plugins (Layer 7) bundle the above. The bootstrap (Layer 8) makes a new project inherit the whole machine on day one. The kit (Layer 9) makes a new machine inherit the whole setup in 90 minutes. Once you see every layer as a different lever on the same context window, the design choices below stop being arbitrary and start being obvious.
-
-### Do - twelve patterns that compound
-
-1. **Do put the unstable stuff in auto-memory, not in CLAUDE.md.** CLAUDE.md is loaded into the system prompt every session; every byte that mutates between calls invalidates the prompt cache. Big rule: if a piece of guidance might evolve, it belongs in `~/.claude/projects/<slug>/memory/feedback_*.md`, not in CLAUDE.md.
-2. **Do write `Why:` and `How to apply:` on every memory entry.** A rule without a *why* is a weird taboo; with a *why* Claude can reason about edge cases instead of blindly following.
-3. **Do open a mission workbook the moment a task spans ≥2 sub-agents or ≥2 user turns.** The cost of opening one is twenty seconds; the benefit is that next week you (or a new Claude session) can resume from exactly where you left off.
-4. **Do dispatch independent sub-tasks in parallel, in one message.** Three Explore agents fired together arrive in one round-trip; three fired sequentially arrive in three. The ceiling is "how many independent things am I asking for" - when the answer is 3+, fan out.
-5. **Do call `gemini_second_opinion` on anything non-trivial before you ship.** One in three missions justifies it. The wins, when they happen, are catastrophic-bug-sized.
-6. **Do invoke `brainstorming` before any redesign or new-feature prompt.** The output is categorically better. The first time you watch this side-by-side you stop running redesigns without it.
-7. **Do run the verifier every two weeks.** `~/.claude/scripts/verify-top-1-setup.sh`. Catches plugin auto-updates that clobbered your settings, accidental deletions, corrupted hooks. `0 REGRESSIONS` is the one number you care about.
-8. **Do refresh the kit any time you add a hook, agent, skill, or plugin.** The tarball is the rollback path; if you don't keep it current, your next disaster recovery is a worse weekend than it has to be.
-9. **Do let the statusline be intrusive.** If ♻ drops below 70%, stop and ask what changed. If `ctx:` goes red, `/clear` and restart. The number on screen is your live debugger; act on it.
-10. **Do pin every external model to a specific version.** Silent fallbacks are how you ship false-confidence outputs. A degraded second opinion is worse than no second opinion.
-11. **Do scope graphify to your production-code subdirectory, not the repo root.** Pulling `Research/`, `node_modules/`, `vendor/` into the graph inflates run time 10× and pollutes the god-node analysis with junk.
-12. **Do make agent descriptions read like a router would read them.** Front-load trigger words, end with explicit DO/DO-NOT scope. Claude pattern-matches on description text; vague descriptions get vague routing.
-
-### Don't - twelve traps to avoid
-
-1. **Don't pile every preference into CLAUDE.md.** I see 800-line CLAUDE.mds in the wild. Cache hit ratio collapses; cost goes up 10×; nobody notices because the default statusline doesn't show ♻.
-2. **Don't skip the backup before editing the live blog/CLAUDE.md/settings.json.** `cp foo foo.backup.md` is one keystroke; rolling back from a corrupted settings.json without one is an hour.
-3. **Don't run `ruflo init` without diff'ing settings.json afterward.** The `--skip-claude` flag is unreliable in v3.5.80; it has clobbered my settings before. Diff. Restore. Move on.
-4. **Don't enable every plugin "just in case."** Each plugin pays a context-window tax on every session. Ten plugins enabled is fine; twenty is not.
-5. **Don't write skills that wrap things Claude already knows how to do.** A "format with prettier" skill adds zero value over `Bash(npx prettier ...)`. Skills exist to encode procedure, not to be aliases.
-6. **Don't try to multiplex multiple model families into one MCP server.** Three small servers - `gemini`, `gpt`, `llama` - are easier to debug, version, and selectively disable than one large multiplexer with a `model=` parameter.
-7. **Don't let `defaultMode: "auto"` substitute for explicit deny rules on secrets.** Auto-approve lets Claude work without prompting; deny rules keep it from touching things that should be untouchable. They're orthogonal. Use both.
-8. **Don't store API keys in `~/.claude/`.** Keys live in your shell rc file (`~/.bashrc`, `~/.zshrc`), exported as env vars. The kit explicitly excludes credential files; the recipe re-creates them on the new machine from your password manager.
-9. **Don't claim "fixed" without a behavioral test.** Adopt the evidence-graded markers (✅ VERIFIED / 🟡 PATCHED / 🟠 AUDIT-ONLY / 🔒 LATENT) and use them on every issue ledger. A commit SHA is not evidence of correctness.
-10. **Don't poll an agent's status after dispatching it.** Spawn it (in the background if needed), trust it to return, and review the result when it lands. Polling spams the model and wastes your context window.
-11. **Don't commit `.claude/settings.local.json`.** It contains your machine-specific Bash allowlist (likely with `sudo`/`apt` patterns). Sharing it would auto-grant those privileges to a teammate who pulls your repo.
-12. **Don't try to build the 24-agent hierarchy on day one.** Start with three specialists. Add an apex when you hit cross-domain missions. Add an arbiter when specialists disagree. The team accretes; it isn't designed.
-
-### How the five-year retrieval actually works (because this surprised me too)
-
-This is the property of the setup that I still marvel at, and it works because of a deliberate design choice in Layer 3 that I want to make explicit. Here is the data flow, end to end, from today's `/exit` to a question you might type in 2031:
-
-![5-year retrieval - today's session, archive, scale, future query](/diagrams/14-five-year-retrieval.png)
-
-Read the diagram left to right. **Today's session** flows into the **Stop hook**, which idempotently `cp -n`s every artifact (transcript, MANIFEST, workbooks, plan files, and a snapshot of the CLAUDE.md as it was at the time) into the deterministic `~/claude-archive/YYYY/MM/<project>/<session>/` layout. That's Phase 1. As the archive grows, you periodically check whether `grep` is still fast enough; for most users, the answer stays *yes* for years. When it eventually doesn't, Phase 2 - an HNSW vector overlay built nightly from Ruflo's `embeddings_*` tools - sits on top of the archive without replacing it. **Crucially, the source of truth never moves.** The archive is always plain files; the embeddings layer is always an accelerator, not a substitute. So a future Claude session asking *"why did we decide X in 2026?"* can use either the grep path or the semantic path - and either one returns the exact workbook, the exact handover block, the exact `file:line` citation that was recorded the day the decision was made.
-
-1. **The Phase-1 archive at `~/claude-archive/` is plain files in a deterministic layout.** `YYYY/MM/<project-slug>/<session-id>/` with `transcript.jsonl`, `MANIFEST.json`, a snapshot of CLAUDE.md from that session, the workbooks active during the session, the plan-mode artifacts. No database. No proprietary format. No vendor lock-in.
-2. **`grep -r` will work in 2031.** The whole archive is searchable with `grep`, `rg`, `awk`, or any Unix tool you'll still have in five years. The session-id naming is deterministic; the MANIFEST.json gives you the cwd, the source transcript path, the timestamp.
-3. **When you come back five years from now and ask Claude *"why did we decide X?"*, the path is concrete:** Claude opens `~/claude-archive/`, searches for the keyword, finds the relevant `transcript.jsonl` and the workbook from that day, reads the handover blocks, surfaces the rationale with the original `file:line` citations. The auto-memory index doesn't need to know about old projects; the archive is a `grep` away.
-4. **When `~/claude-archive/` outgrows `grep` (somewhere past 10–20 GB),** the Phase-2 plan is to put a semantic index *on top of* the archive without replacing it. Ruflo's HNSW embeddings tools are wired in for exactly this. The archive itself stays plain files forever. The embedding layer is an accelerator, not a substitute.
-
-This is why the archive uses `cp -n` (no overwrite) and `set -uo pipefail` deliberately *without* `-e`: every step has `|| true`, so a failure on one file does not corrupt the rest. The Stop hook is async, fault-tolerant, and idempotent. Re-running it on the same session is a no-op. Three years from now when you've upgraded Claude Code through six versions, your archive from today is still readable, still `grep`-able, still complete.
-
----
-
-## Key takeaways - what to remember if you only remember nine things
-
-If you remember only nine things from this entire post, let it be these:
-
-1. **The bottleneck stops being how fast Claude codes; it becomes how well you set Claude up to do its job.** Every layer in this post is a different lever on that one bottleneck.
-2. **The safety net is non-negotiable.** Hooks + deny rules together. Once installed, you can finally let Claude work unsupervised without watching every keystroke.
-3. **Memory is split across four tiers for a reason.** Hot tier (CLAUDE.md, always loaded - keep it small), warm tier (auto-memory + workbooks, loaded on relevance), and cold tier (`~/claude-archive/`, plain files, `grep`-able forever). Each tier has a different cache cost and a different lifetime.
-4. **Skills encode procedure; agents carry identity.** A skill loaded into context tells Claude *how* to do something; an agent dispatched in parallel tells Claude *who* should do it. Don't conflate them.
-5. **Specialization is the cure for hallucination.** A narrow agent with a tight preamble and a `file:line` evidence rule will not invent broken synchronization schemes. A generalist will.
-6. **MCP makes the setup model-agnostic.** Twenty lines of Python wraps any LLM as a first-class Claude tool. You're not betting your career on Anthropic; you're using Claude Code as the orchestration layer and swapping models behind it as the landscape shifts.
-7. **The project-bootstrap skill is the highest-leverage compounding investment in the entire setup.** Three questions, thirty seconds, every new project inherits every convention you've earned. Five minutes saved × every new project × the rest of your career.
-8. **Portability is what turns a dead laptop on a Friday into a coffee break.** The kit is not optional. Ninety minutes from new-machine to back-in-flow. Build it even if you never plan to migrate.
-9. **Encode discipline once, inherit it always.** This is the principle that runs underneath every layer. Karpathy rules in CLAUDE.md, evidence-graded markers in auto-memory, investigate-then-implement in the agent preamble, mission-workbook format as a convention, safety as hooks, portability as a tarball. Each layer is one act of encoding that pays for itself for the rest of your career.
-
----
-
-## Closing
-
-### What does this stack cost?
-
-Tokens: a typical session uses ~30K tokens for the always-loaded layer (CLAUDE.md + auto-memory index + skill descriptions). At Opus 4.7 prices that's ~$0.45/session of "fixed cost" before any work happens. Cache hit ratio of >90% (which the statusline keeps you honest about) brings effective cost to about $0.05/session.
-
-Time: 60–90 minutes to set up from scratch using the recipe. Two hours of refinement after using it for a week (everyone's preferences differ slightly). Then ~5 minutes per month maintaining it (running the verifier, refreshing the kit when something interesting changes).
-
-### What does it not cost?
-
-It does *not* cost you the ability to debug it. Every layer is a shell script or markdown file. If a hook misbehaves, you read 48 lines of bash. If a skill produces wrong output, you read 164 lines of markdown. There's no opaque binary or vendor SDK between you and the behavior. This is by design - the alternative (a heavyweight orchestration framework) hides too much when you need to fix something at 2 AM.
-
-### What this is not
-
-This isn't magic. It's an amplifier, not an autopilot. Karpathy's "think before coding" is a rule the setup tries to make Claude follow - but if you skip thinking, the setup doesn't think for you. Every plan still needs your judgment. Every PR still needs your review.
-
-It is not finished. I expect to add a Phase 2 semantic layer over the archive when `grep` stops being fast enough. I expect to refactor the agent hierarchy when the codebase migrates Python → Rust. I expect new MCPs to land that are worth installing. The kit is versioned; expect v2 in 6 months.
-
-It is not the only way. There are other top-1% setups out there - Loop+ralph for autopiloting, fancier statusline themes, different skill libraries. Take this as a *baseline* and ride past it.
-
-### What to do next
-
-1. **Clone the kit.** `git clone <your fork> ~/Desktop/Claude_Total_Replication` or rebuild it from the recipe in this post.
-2. **Run the recipe.** Path A (Ubuntu/Mac) or Path B (Windows/WSL2). 60–90 minutes.
-3. **Run the verifier.** `~/.claude/scripts/verify-top-1-setup.sh`. Expect `0 REGRESSIONS`.
-4. **Open a real project.** Run `/project-bootstrap`. Answer three questions. Watch the scaffolding land.
-5. **Use it for a week.** Pay attention to what bugs you. Modify the parts that do.
-6. **Share back.** If you build something better - a smarter hook, a sharper agent, a more useful skill - open a PR or write your own post. The whole field is figuring this out at the same time.
-
-The full kit is at `~/Desktop/Claude_Total_Replication/` on my machine; if you'd like me to ship a public Git repo with these artifacts, [reach out](mailto:saugata.paul1010@gmail.com) - happy to maintain it.
-
-### One last thing - the philosophy that ties it all together
-
-If you only remember one paragraph from this entire post, let it be this one.
-
-**Encode discipline once, inherit it always.** That is the principle that runs underneath every layer above. The Karpathy rules are encoded in a global CLAUDE.md so every project inherits them without re-typing. The evidence-graded markers are encoded in an auto-memory file so every agent in every mission inherits them without being lectured. The "Investigate then implement" protocol is encoded in the hft-team preamble so every specialist inherits it without me having to remind them. The mission-workbook handover format is encoded in a convention so every dispatched agent inherits the format without coordination. The safety net is encoded in hooks so every Bash call inherits the guardrail without me watching. The portability is encoded in a tarball + a verifier so every machine I ever own inherits the setup without ceremony. **Each layer is one act of encoding that pays for itself for the rest of your career.**
-
-Most tools ask you to learn them. This setup asks you to encode what you already know - your conventions, your evidence standards, your safety practices, your taste - once, and then inherit it automatically on every new project, in every new session, on every new machine. After you've built this, using Claude Code without it will feel the way it feels to write code without tests. Possible. But the risk creeps up on you until you notice you're debugging at 2 AM instead of shipping at 5 PM.
-
-The bottleneck stops being "how fast does Claude code." The bottleneck becomes "how well do I set Claude up to do its job." The setup's worth compounds: better memory means fewer explanations, fewer explanations mean longer uninterrupted sessions, longer sessions mean better code, better code means more trust, more trust means more delegation, more delegation means more output. The whole post you just read is one principle in twelve costumes.
-
-If you have made it this far, you are either building this or deciding whether to build this. **Both are the right answer.** And if you build it, change the parts I got wrong and tell me what you changed. The whole field is figuring this out at the same time, and good setups should be public.
-
-### Thank you, and a few names
-
-If you have made it this far, thank you. I know it was long. The whole thing took me six months to build and one weekend to write up - and honestly the writeup was the harder part.
-
-Massive thanks to the people whose work I have stood on top of: **Andrej Karpathy**, whose four discipline rules (think before coding · simplicity first · surgical changes · goal-driven execution) run through every layer of this post; **Anthropic's engineering team**, who built Claude Code itself plus the plugin marketplace and the skills system that made all of this possible; **Jay Alammar**, whose Illustrated Transformer is the post that taught me how to teach with diagrams instead of just words; **Varma Sir at AppliedAICourse**, who first taught me that engineering posts should read like one engineer talking to another, not a textbook chapter; and the small group of friends who patiently tested the replication kit on three different laptops while I argued with shell quoting at 2 AM. You all know who you are.
-
-If you build on this, please tell me. If you build something *better* than this, please tell me louder. My email is in the byline below. I read every message and I would much rather hear "your hook script broke on my Mac, here's the fix" than another LinkedIn DM. The whole field is figuring this out at the same time, and good setups should be public.
-
-Build something good with it.
-
-- Saugata Paul · April 2026 · Bangalore, India
-
----
-
-## Appendix A - Full file index
-
-Every file the kit drops on your machine, with a one-line purpose. Use this as a "what is this file again?" reference.
-
-### `~/.claude/` (user-global)
-
-| Path | Purpose |
-|---|---|
-| `CLAUDE.md` | Global rules - Karpathy, MCP server docs, mission-workbook convention, markdown documentation standard. ~250 lines. |
-| `settings.json` | Master config. 17 deny rules + 4 hooks + statusline command + 10 enabled plugins + env vars + theme. 112 lines. |
-| `settings.local.json` | Personal allowlist (gitignored). Project-specific Bash whitelists. |
-| `statusline.sh` | 223-line statusline with gradient bar, dual clocks, cache-hit %, rate-limit bars. |
-| `hooks/pre_tool_use.sh` | PreToolUse safety net - blocks .env / rm -rf / curl\|bash / fork bombs. 48 lines. |
-| `hooks/session_start.sh` | SessionStart workbook hint. 32 lines, defers to project hook if present. |
-| `hooks/user_prompt_submit.sh` | Per-prompt context injection (timestamp + cwd + branch + git status). 24 lines. |
-| `hooks/session_stop_archive.sh` | Phase-1 lossless archive on Stop. 89 lines, async, idempotent. |
-| `scripts/verify-top-1-setup.sh` | Auditor. Returns `0 REGRESSIONS` when healthy. Run every 2 weeks. |
-| `agents/*.md` | 12 generic agents (ai-engineer, backend-specialist, frontend-specialist, devops-specialist, etc.). |
-| `skills/project-bootstrap/SKILL.md` + `templates/` (14 files) | The day-1 scaffold skill. |
-| `skills/graphify/SKILL.md` | Code-to-knowledge-graph skill. |
-| `skills/drawio-architect/SKILL.md` | Production-grade .drawio diagrams (Sugiyama + A* routing). |
-| `skills/manim-animator/SKILL.md` | 3B1B-quality math animations. |
-| `skills/karpathy-guidelines/SKILL.md` | Karpathy 4-rule discipline. |
-| `mcp-servers/gemini/server.py` | Custom Gemini MCP server. 423 lines. |
-| `plugins/hft-team/agents/*.md` | 24 hft-team specialist agents. |
-| `plans/*.md` | Plan-mode artifacts. Persisted across sessions. |
-| `projects/<slug>/memory/MEMORY.md` + topical files | Per-project auto-memory. |
-
-### `~/claude-archive/` (user-global)
-
-| Path | Purpose |
-|---|---|
-| `YYYY/MM/<project-slug>/<session-id>/transcript.jsonl` | Full session transcript. |
-| `YYYY/MM/<project-slug>/<session-id>/MANIFEST.json` | Archive metadata (timestamp, session_id, cwd, source_transcript). |
-| `YYYY/MM/<project-slug>/<session-id>/CLAUDE.md` | Snapshot of project CLAUDE.md at archive time. |
-| `YYYY/MM/<project-slug>/<session-id>/workbooks/` | Mission workbook snapshots. |
-| `YYYY/MM/<project-slug>/<session-id>/plans/` | Plan-mode artifact snapshots. |
-| `.archive.log` | Audit trail - one line per session archived. |
-
-### Per-project (created by `project-bootstrap`)
-
-| Path | Purpose |
-|---|---|
-| `CLAUDE.md` | Project rules (committed). |
-| `CLAUDE.local.md.template` | Personal layer template (rename to `CLAUDE.local.md` for use; gitignored). |
-| `.claude/settings.json` | Project hooks + permissions. |
-| `.claude/settings.local.json` | Personal allowlist (gitignored). |
-| `.claude/workbooks/INDEX.md` | Mission workbook index. |
-| `.claude/plans/` | Plan-mode artifacts (gitignored). |
-| `docs/<MONTH>_onwards/ADR-001-*.md.template` | Architecture Decision Record template. |
-| `docs/<MONTH>_onwards/ADVISORY-001-*.md.template` | Advisory (living strategic doc) template. |
-| `docs/<MONTH>_onwards/MISSION_X.X_ISSUE_*.md.template` | GitHub-issue-ready mission template. |
-| `docs/<MONTH>_onwards/All_Issues_Latest_<MONTH>_<YEAR>.md` | Regression ledger. |
-| `docs/<MONTH>_onwards/DEFERRED_ISSUES_ROADMAP.md` | Deferred-issues roadmap. |
-| `.githooks/post-commit` | Graphify auto-regen (only if opted in). |
-| `.githooks/pre-push` | Graphify staleness check (only if opted in). |
-
----
-
-## Appendix B - Troubleshooting
-
-**Hooks aren't firing.**
-Check three things: (1) `chmod +x ~/.claude/hooks/*.sh` - tar can lose the executable bit; (2) the path in `settings.json` uses `~` (Claude Code expands it) not `$HOME` (which it doesn't); (3) `claude` is being launched from the right shell - your hook depends on `jq` and `git` being on PATH.
-
-**Statusline is missing or showing garbage.**
-Check `chmod +x ~/.claude/statusline.sh`. Test it standalone:
-```bash
-echo '{"model":{"display_name":"opus-4.7"},"workspace":{"current_dir":"'$PWD'"},"context_window":{"used_percentage":25}}' | bash ~/.claude/statusline.sh
-```
-If you see `[opus-4.7] <basename> ctx:[██░░░░░░░░░░░░░] 25%`, the script works - Claude Code's wiring is the problem (check `settings.json` `statusLine` section). If you see literal escape codes (`\033[…`), your terminal isn't rendering true-color - switch to Windows Terminal / Alacritty / kitty / iTerm2.
-
-**`claude mcp list` shows MCP as `× Failed` or `! Needs authentication`.**
-For Gemini: `echo $GEMINI_API_KEY` - empty? Re-export. Wrong? Check the key in your password manager.
-For GitHub: `echo $GITHUB_TOKEN`. Same drill.
-For Playwright: `npx playwright install chromium`.
-For Context7: usually network; check `npx @upstash/context7-mcp --help` runs at all.
-
-**`ruflo init` clobbered my settings.**
-Known issue in v3.5.80 - the `--skip-claude` flag is unreliable. After `ruflo init`, diff `~/.claude/settings.json` against the version from your kit and restore manually if needed. Also clean up Ruflo's swarm/sparc skills:
-```bash
-rm -rf ~/.claude/skills/{hooks-automation,pair-programming,skill-builder,sparc-methodology,stream-chain,swarm-advanced,swarm-orchestration,verification-quality} 2>/dev/null
-```
-
-**Verifier fails on `5.1 deny rules (17 entries)` - "expected 17, got X".**
-Your `settings.json` deny list has been edited. Re-merge from the bundle's settings.json or update the verifier's expected count.
-
-**Auto-memory isn't loading.**
-Per-project memory lives at `~/.claude/projects/<sanitized-cwd-path>/memory/MEMORY.md`. The slug is the absolute path with `/` → `-`. If you're not seeing memory loaded, check that directory exists and has a `MEMORY.md`. If it doesn't, Claude Code creates it on first save - but only if you (or Claude) actually save a memory in that project.
-
-**Graphify is slow.**
-First run is always slow - it builds the cache. Subsequent runs are 2–8 s. If yours is 40+ s consistently, you're scanning the wrong directory (running from repo root pulled in `Research/` and `node_modules/`). Scope to your production-code subdirectory, e.g., `cd src && graphify update .`.
-
-**WSL: bash scripts complain about `^M` characters.**
-Line endings problem from Windows transfer. Fix:
-```bash
-sudo apt install dos2unix
-dos2unix ~/.claude/hooks/*.sh ~/.claude/statusline.sh ~/.claude/scripts/*.sh
-```
-
-**Context-window keeps blowing up.**
-Three culprits in order of likelihood: (1) CLAUDE.md is too big - split into auto-memory; (2) you have too many plugins enabled - disable the irrelevant ones; (3) you're not using `/clear` between unrelated tasks. The statusline's `ctx:` bar tells you when to clear.
-
-**The ♻ cache-hit % is consistently below 70%.**
-Something in your stable prefix (system prompt, CLAUDE.md, auto-memory index, skill descriptions, hook output) is changing between calls and invalidating the cache. Common culprits: (1) a `user_prompt_submit.sh` hook that injects content with a constantly-changing field - like a high-precision timestamp or a sequence number - into the `<context>` block; (2) a CLAUDE.md you edited mid-session (the cache invalidates immediately); (3) skill descriptions that include dynamic content (e.g., a date). Diagnosis: open one session, send three trivial prompts, watch the ratio. If it's below 90% on the third turn, your prefix is mutating. Re-read the Layer 2 prompt-cache aside; the fix is almost always to move the dynamic content out of the prefix or to batch related calls in one turn instead of three.
-
----
-
-## Appendix C - Extending
-
-### Adding your own custom agent
-
-Drop a markdown file at `~/.claude/agents/<your-agent>.md`:
-
-```yaml
----
-name: my-rust-specialist
-description: Rust 1.85 with tokio, axum, sqlx. Use for Rust code in any project. Read+Write.
-tools: Read, Write, Edit, Grep, Glob, Bash
-model: sonnet
----
-
-You are a senior Rust engineer. Defaults: tokio for async, axum for HTTP,
-sqlx for DB. Cite line numbers in every code reference. Apply Karpathy
-discipline.
-```
-
-Restart `claude` to pick up the new agent. Test by asking a Rust question and watching whether Claude dispatches your agent (its name should appear in the agent's response).
-
-### Adding your own custom skill
-
-Drop a directory at `~/.claude/skills/<skill-name>/`:
-
-```
-~/.claude/skills/my-skill/
-├── SKILL.md           ← the skill prompt
-├── templates/         ← optional templates
-└── assets/            ← optional helper files
-```
-
-`SKILL.md` frontmatter:
-
-```yaml
----
-name: my-skill
-description: Use when the user asks to do X. [Pattern-matched against prompts.]
-disable-model-invocation: false
-user-invocable: true
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep
----
-
-# my-skill
-
-[Body of the skill - what to do, in what order, with what verification gates.]
-```
-
-Test by either typing `/my-skill` (user-invocable) or by phrasing a prompt that matches the description (model-invocable).
-
-### Adding your own custom MCP server
-
-The Gemini MCP server at `~/.claude/mcp-servers/gemini/server.py` is a reference - you can copy its structure for any external service:
-
-```python
-from fastmcp import FastMCP
-mcp = FastMCP("my-service")
-
-@mcp.tool()
-def my_tool(arg: str) -> str:
-    """One-line description for Claude."""
-    return do_something(arg)
-
-if __name__ == "__main__":
-    mcp.run()
-```
-
-Register:
-
-```bash
-claude mcp add -s user my-service "$(which python3)" -- /path/to/your/server.py
-claude mcp list   # confirm ✓ Connected
-```
-
-That's it. Your tools are now first-class in Claude Code.
-
----
-
-*If this post helped you, tell another developer. The whole field is figuring this out at the same time, and good setups should be public.*
-
----
-
----
-
 ## Live demo: watch the system build a real app in under an hour
 
 The post above describes the *infrastructure*. This section shows the *workflow* — what happens when that infrastructure is pointed at a brand-new project.
 
 The prompt below — `PROJECT_BRIEF.md` — is what I paste into a fresh Claude Code session to build a photographer's portfolio app from scratch: backend (FastAPI + Pydantic + SQLModel + Pillow), frontend (Vite + React + TS + Tailwind + Framer Motion), tests (pytest + Playwright + Lighthouse), CI/CD (GitHub Actions, pinned action versions), GitHub repo (auto-created), local deploy (background uvicorn + vite preview), URL handoff. **One prompt, ~58 minutes wall clock, zero clicks beyond plan approval.**
 
-\![Photography Dashboard build flow](/diagrams/16-photography-dashboard-flow.png)
+![Photography Dashboard build flow](/diagrams/16-photography-dashboard-flow.png)
 
 ### How Claude actually executes the brief
 
@@ -2926,6 +2607,326 @@ If a gate exceeds the **hard limit**, kill it, mark the gate amber (not red), an
 
 </div>
 </details>
+
+
+## Best practices - the do's, the don'ts, and how the mechanism actually works
+
+Before the closing, a working developer's reference card. These are the patterns I keep coming back to, distilled from two-plus years of watching the setup do well and watching it do badly. Use this section as the lookup table you'd staple to your monitor.
+
+### The mechanism, in one paragraph
+
+Every layer in this post is a different way of **keeping Claude's context window stable, focused, and useful**. The safety net (Layer 1) keeps Claude from doing irreversible things while it's working in your context. The statusline (Layer 2) keeps *you* honest about what's in the context - how full it is, how warm the cache is, what it's costing. The memory ladder (Layer 3) keeps the context *continuous* across sessions: what was loaded yesterday is reachable today without re-explanation. Skills (Layer 4) keep the context *procedural* - invoking a skill is loading a recipe Claude executes verbatim. Agents (Layer 5) keep the context *narrow*: each specialist holds only the slice it can verify. MCPs (Layer 6) extend the context *outward* - to other models, other tools, external state. Plugins (Layer 7) bundle the above. The bootstrap (Layer 8) makes a new project inherit the whole machine on day one. The kit (Layer 9) makes a new machine inherit the whole setup in 90 minutes. Once you see every layer as a different lever on the same context window, the design choices below stop being arbitrary and start being obvious.
+
+### Do - twelve patterns that compound
+
+1. **Do put the unstable stuff in auto-memory, not in CLAUDE.md.** CLAUDE.md is loaded into the system prompt every session; every byte that mutates between calls invalidates the prompt cache. Big rule: if a piece of guidance might evolve, it belongs in `~/.claude/projects/<slug>/memory/feedback_*.md`, not in CLAUDE.md.
+2. **Do write `Why:` and `How to apply:` on every memory entry.** A rule without a *why* is a weird taboo; with a *why* Claude can reason about edge cases instead of blindly following.
+3. **Do open a mission workbook the moment a task spans ≥2 sub-agents or ≥2 user turns.** The cost of opening one is twenty seconds; the benefit is that next week you (or a new Claude session) can resume from exactly where you left off.
+4. **Do dispatch independent sub-tasks in parallel, in one message.** Three Explore agents fired together arrive in one round-trip; three fired sequentially arrive in three. The ceiling is "how many independent things am I asking for" - when the answer is 3+, fan out.
+5. **Do call `gemini_second_opinion` on anything non-trivial before you ship.** One in three missions justifies it. The wins, when they happen, are catastrophic-bug-sized.
+6. **Do invoke `brainstorming` before any redesign or new-feature prompt.** The output is categorically better. The first time you watch this side-by-side you stop running redesigns without it.
+7. **Do run the verifier every two weeks.** `~/.claude/scripts/verify-top-1-setup.sh`. Catches plugin auto-updates that clobbered your settings, accidental deletions, corrupted hooks. `0 REGRESSIONS` is the one number you care about.
+8. **Do refresh the kit any time you add a hook, agent, skill, or plugin.** The tarball is the rollback path; if you don't keep it current, your next disaster recovery is a worse weekend than it has to be.
+9. **Do let the statusline be intrusive.** If ♻ drops below 70%, stop and ask what changed. If `ctx:` goes red, `/clear` and restart. The number on screen is your live debugger; act on it.
+10. **Do pin every external model to a specific version.** Silent fallbacks are how you ship false-confidence outputs. A degraded second opinion is worse than no second opinion.
+11. **Do scope graphify to your production-code subdirectory, not the repo root.** Pulling `Research/`, `node_modules/`, `vendor/` into the graph inflates run time 10× and pollutes the god-node analysis with junk.
+12. **Do make agent descriptions read like a router would read them.** Front-load trigger words, end with explicit DO/DO-NOT scope. Claude pattern-matches on description text; vague descriptions get vague routing.
+
+### Don't - twelve traps to avoid
+
+1. **Don't pile every preference into CLAUDE.md.** I see 800-line CLAUDE.mds in the wild. Cache hit ratio collapses; cost goes up 10×; nobody notices because the default statusline doesn't show ♻.
+2. **Don't skip the backup before editing the live blog/CLAUDE.md/settings.json.** `cp foo foo.backup.md` is one keystroke; rolling back from a corrupted settings.json without one is an hour.
+3. **Don't run `ruflo init` without diff'ing settings.json afterward.** The `--skip-claude` flag is unreliable in v3.5.80; it has clobbered my settings before. Diff. Restore. Move on.
+4. **Don't enable every plugin "just in case."** Each plugin pays a context-window tax on every session. Ten plugins enabled is fine; twenty is not.
+5. **Don't write skills that wrap things Claude already knows how to do.** A "format with prettier" skill adds zero value over `Bash(npx prettier ...)`. Skills exist to encode procedure, not to be aliases.
+6. **Don't try to multiplex multiple model families into one MCP server.** Three small servers - `gemini`, `gpt`, `llama` - are easier to debug, version, and selectively disable than one large multiplexer with a `model=` parameter.
+7. **Don't let `defaultMode: "auto"` substitute for explicit deny rules on secrets.** Auto-approve lets Claude work without prompting; deny rules keep it from touching things that should be untouchable. They're orthogonal. Use both.
+8. **Don't store API keys in `~/.claude/`.** Keys live in your shell rc file (`~/.bashrc`, `~/.zshrc`), exported as env vars. The kit explicitly excludes credential files; the recipe re-creates them on the new machine from your password manager.
+9. **Don't claim "fixed" without a behavioral test.** Adopt the evidence-graded markers (✅ VERIFIED / 🟡 PATCHED / 🟠 AUDIT-ONLY / 🔒 LATENT) and use them on every issue ledger. A commit SHA is not evidence of correctness.
+10. **Don't poll an agent's status after dispatching it.** Spawn it (in the background if needed), trust it to return, and review the result when it lands. Polling spams the model and wastes your context window.
+11. **Don't commit `.claude/settings.local.json`.** It contains your machine-specific Bash allowlist (likely with `sudo`/`apt` patterns). Sharing it would auto-grant those privileges to a teammate who pulls your repo.
+12. **Don't try to build the 24-agent hierarchy on day one.** Start with three specialists. Add an apex when you hit cross-domain missions. Add an arbiter when specialists disagree. The team accretes; it isn't designed.
+
+### How the five-year retrieval actually works (because this surprised me too)
+
+This is the property of the setup that I still marvel at, and it works because of a deliberate design choice in Layer 3 that I want to make explicit. Here is the data flow, end to end, from today's `/exit` to a question you might type in 2031:
+
+![5-year retrieval - today's session, archive, scale, future query](/diagrams/14-five-year-retrieval.png)
+
+Read the diagram left to right. **Today's session** flows into the **Stop hook**, which idempotently `cp -n`s every artifact (transcript, MANIFEST, workbooks, plan files, and a snapshot of the CLAUDE.md as it was at the time) into the deterministic `~/claude-archive/YYYY/MM/<project>/<session>/` layout. That's Phase 1. As the archive grows, you periodically check whether `grep` is still fast enough; for most users, the answer stays *yes* for years. When it eventually doesn't, Phase 2 - an HNSW vector overlay built nightly from Ruflo's `embeddings_*` tools - sits on top of the archive without replacing it. **Crucially, the source of truth never moves.** The archive is always plain files; the embeddings layer is always an accelerator, not a substitute. So a future Claude session asking *"why did we decide X in 2026?"* can use either the grep path or the semantic path - and either one returns the exact workbook, the exact handover block, the exact `file:line` citation that was recorded the day the decision was made.
+
+1. **The Phase-1 archive at `~/claude-archive/` is plain files in a deterministic layout.** `YYYY/MM/<project-slug>/<session-id>/` with `transcript.jsonl`, `MANIFEST.json`, a snapshot of CLAUDE.md from that session, the workbooks active during the session, the plan-mode artifacts. No database. No proprietary format. No vendor lock-in.
+2. **`grep -r` will work in 2031.** The whole archive is searchable with `grep`, `rg`, `awk`, or any Unix tool you'll still have in five years. The session-id naming is deterministic; the MANIFEST.json gives you the cwd, the source transcript path, the timestamp.
+3. **When you come back five years from now and ask Claude *"why did we decide X?"*, the path is concrete:** Claude opens `~/claude-archive/`, searches for the keyword, finds the relevant `transcript.jsonl` and the workbook from that day, reads the handover blocks, surfaces the rationale with the original `file:line` citations. The auto-memory index doesn't need to know about old projects; the archive is a `grep` away.
+4. **When `~/claude-archive/` outgrows `grep` (somewhere past 10–20 GB),** the Phase-2 plan is to put a semantic index *on top of* the archive without replacing it. Ruflo's HNSW embeddings tools are wired in for exactly this. The archive itself stays plain files forever. The embedding layer is an accelerator, not a substitute.
+
+This is why the archive uses `cp -n` (no overwrite) and `set -uo pipefail` deliberately *without* `-e`: every step has `|| true`, so a failure on one file does not corrupt the rest. The Stop hook is async, fault-tolerant, and idempotent. Re-running it on the same session is a no-op. Three years from now when you've upgraded Claude Code through six versions, your archive from today is still readable, still `grep`-able, still complete.
+
+---
+
+## Key takeaways - what to remember if you only remember nine things
+
+If you remember only nine things from this entire post, let it be these:
+
+1. **The bottleneck stops being how fast Claude codes; it becomes how well you set Claude up to do its job.** Every layer in this post is a different lever on that one bottleneck.
+2. **The safety net is non-negotiable.** Hooks + deny rules together. Once installed, you can finally let Claude work unsupervised without watching every keystroke.
+3. **Memory is split across four tiers for a reason.** Hot tier (CLAUDE.md, always loaded - keep it small), warm tier (auto-memory + workbooks, loaded on relevance), and cold tier (`~/claude-archive/`, plain files, `grep`-able forever). Each tier has a different cache cost and a different lifetime.
+4. **Skills encode procedure; agents carry identity.** A skill loaded into context tells Claude *how* to do something; an agent dispatched in parallel tells Claude *who* should do it. Don't conflate them.
+5. **Specialization is the cure for hallucination.** A narrow agent with a tight preamble and a `file:line` evidence rule will not invent broken synchronization schemes. A generalist will.
+6. **MCP makes the setup model-agnostic.** Twenty lines of Python wraps any LLM as a first-class Claude tool. You're not betting your career on Anthropic; you're using Claude Code as the orchestration layer and swapping models behind it as the landscape shifts.
+7. **The project-bootstrap skill is the highest-leverage compounding investment in the entire setup.** Three questions, thirty seconds, every new project inherits every convention you've earned. Five minutes saved × every new project × the rest of your career.
+8. **Portability is what turns a dead laptop on a Friday into a coffee break.** The kit is not optional. Ninety minutes from new-machine to back-in-flow. Build it even if you never plan to migrate.
+9. **Encode discipline once, inherit it always.** This is the principle that runs underneath every layer. Karpathy rules in CLAUDE.md, evidence-graded markers in auto-memory, investigate-then-implement in the agent preamble, mission-workbook format as a convention, safety as hooks, portability as a tarball. Each layer is one act of encoding that pays for itself for the rest of your career.
+
+---
+
+## Closing
+
+### What does this stack cost?
+
+Tokens: a typical session uses ~30K tokens for the always-loaded layer (CLAUDE.md + auto-memory index + skill descriptions). At Opus 4.7 prices that's ~$0.45/session of "fixed cost" before any work happens. Cache hit ratio of >90% (which the statusline keeps you honest about) brings effective cost to about $0.05/session.
+
+Time: 60–90 minutes to set up from scratch using the recipe. Two hours of refinement after using it for a week (everyone's preferences differ slightly). Then ~5 minutes per month maintaining it (running the verifier, refreshing the kit when something interesting changes).
+
+### What does it not cost?
+
+It does *not* cost you the ability to debug it. Every layer is a shell script or markdown file. If a hook misbehaves, you read 48 lines of bash. If a skill produces wrong output, you read 164 lines of markdown. There's no opaque binary or vendor SDK between you and the behavior. This is by design - the alternative (a heavyweight orchestration framework) hides too much when you need to fix something at 2 AM.
+
+### What this is not
+
+This isn't magic. It's an amplifier, not an autopilot. Karpathy's "think before coding" is a rule the setup tries to make Claude follow - but if you skip thinking, the setup doesn't think for you. Every plan still needs your judgment. Every PR still needs your review.
+
+It is not finished. I expect to add a Phase 2 semantic layer over the archive when `grep` stops being fast enough. I expect to refactor the agent hierarchy when the codebase migrates Python → Rust. I expect new MCPs to land that are worth installing. The kit is versioned; expect v2 in 6 months.
+
+It is not the only way. There are other top-1% setups out there - Loop+ralph for autopiloting, fancier statusline themes, different skill libraries. Take this as a *baseline* and ride past it.
+
+### What to do next
+
+1. **Clone the kit.** `git clone <your fork> ~/Desktop/Claude_Total_Replication` or rebuild it from the recipe in this post.
+2. **Run the recipe.** Path A (Ubuntu/Mac) or Path B (Windows/WSL2). 60–90 minutes.
+3. **Run the verifier.** `~/.claude/scripts/verify-top-1-setup.sh`. Expect `0 REGRESSIONS`.
+4. **Open a real project.** Run `/project-bootstrap`. Answer three questions. Watch the scaffolding land.
+5. **Use it for a week.** Pay attention to what bugs you. Modify the parts that do.
+6. **Share back.** If you build something better - a smarter hook, a sharper agent, a more useful skill - open a PR or write your own post. The whole field is figuring this out at the same time.
+
+The full kit is at `~/Desktop/Claude_Total_Replication/` on my machine; if you'd like me to ship a public Git repo with these artifacts, [reach out](mailto:saugata.paul1010@gmail.com) - happy to maintain it.
+
+### One last thing - the philosophy that ties it all together
+
+If you only remember one paragraph from this entire post, let it be this one.
+
+**Encode discipline once, inherit it always.** That is the principle that runs underneath every layer above. The Karpathy rules are encoded in a global CLAUDE.md so every project inherits them without re-typing. The evidence-graded markers are encoded in an auto-memory file so every agent in every mission inherits them without being lectured. The "Investigate then implement" protocol is encoded in the hft-team preamble so every specialist inherits it without me having to remind them. The mission-workbook handover format is encoded in a convention so every dispatched agent inherits the format without coordination. The safety net is encoded in hooks so every Bash call inherits the guardrail without me watching. The portability is encoded in a tarball + a verifier so every machine I ever own inherits the setup without ceremony. **Each layer is one act of encoding that pays for itself for the rest of your career.**
+
+Most tools ask you to learn them. This setup asks you to encode what you already know - your conventions, your evidence standards, your safety practices, your taste - once, and then inherit it automatically on every new project, in every new session, on every new machine. After you've built this, using Claude Code without it will feel the way it feels to write code without tests. Possible. But the risk creeps up on you until you notice you're debugging at 2 AM instead of shipping at 5 PM.
+
+The bottleneck stops being "how fast does Claude code." The bottleneck becomes "how well do I set Claude up to do its job." The setup's worth compounds: better memory means fewer explanations, fewer explanations mean longer uninterrupted sessions, longer sessions mean better code, better code means more trust, more trust means more delegation, more delegation means more output. The whole post you just read is one principle in twelve costumes.
+
+If you have made it this far, you are either building this or deciding whether to build this. **Both are the right answer.** And if you build it, change the parts I got wrong and tell me what you changed. The whole field is figuring this out at the same time, and good setups should be public.
+
+### Thank you, and a few names
+
+If you have made it this far, thank you. I know it was long. The whole thing took me six months to build and one weekend to write up - and honestly the writeup was the harder part.
+
+Massive thanks to the people whose work I have stood on top of: **Andrej Karpathy**, whose four discipline rules (think before coding · simplicity first · surgical changes · goal-driven execution) run through every layer of this post; **Anthropic's engineering team**, who built Claude Code itself plus the plugin marketplace and the skills system that made all of this possible; **Jay Alammar**, whose Illustrated Transformer is the post that taught me how to teach with diagrams instead of just words; **Varma Sir at AppliedAICourse**, who first taught me that engineering posts should read like one engineer talking to another, not a textbook chapter; and the small group of friends who patiently tested the replication kit on three different laptops while I argued with shell quoting at 2 AM. You all know who you are.
+
+If you build on this, please tell me. If you build something *better* than this, please tell me louder. My email is in the byline below. I read every message and I would much rather hear "your hook script broke on my Mac, here's the fix" than another LinkedIn DM. The whole field is figuring this out at the same time, and good setups should be public.
+
+Build something good with it.
+
+- Saugata Paul · April 2026 · Bangalore, India
+
+---
+
+## Appendix A - Full file index
+
+Every file the kit drops on your machine, with a one-line purpose. Use this as a "what is this file again?" reference.
+
+### `~/.claude/` (user-global)
+
+| Path | Purpose |
+|---|---|
+| `CLAUDE.md` | Global rules - Karpathy, MCP server docs, mission-workbook convention, markdown documentation standard. ~250 lines. |
+| `settings.json` | Master config. 17 deny rules + 4 hooks + statusline command + 10 enabled plugins + env vars + theme. 112 lines. |
+| `settings.local.json` | Personal allowlist (gitignored). Project-specific Bash whitelists. |
+| `statusline.sh` | 223-line statusline with gradient bar, dual clocks, cache-hit %, rate-limit bars. |
+| `hooks/pre_tool_use.sh` | PreToolUse safety net - blocks .env / rm -rf / curl\|bash / fork bombs. 48 lines. |
+| `hooks/session_start.sh` | SessionStart workbook hint. 32 lines, defers to project hook if present. |
+| `hooks/user_prompt_submit.sh` | Per-prompt context injection (timestamp + cwd + branch + git status). 24 lines. |
+| `hooks/session_stop_archive.sh` | Phase-1 lossless archive on Stop. 89 lines, async, idempotent. |
+| `scripts/verify-top-1-setup.sh` | Auditor. Returns `0 REGRESSIONS` when healthy. Run every 2 weeks. |
+| `agents/*.md` | 12 generic agents (ai-engineer, backend-specialist, frontend-specialist, devops-specialist, etc.). |
+| `skills/project-bootstrap/SKILL.md` + `templates/` (14 files) | The day-1 scaffold skill. |
+| `skills/graphify/SKILL.md` | Code-to-knowledge-graph skill. |
+| `skills/drawio-architect/SKILL.md` | Production-grade .drawio diagrams (Sugiyama + A* routing). |
+| `skills/manim-animator/SKILL.md` | 3B1B-quality math animations. |
+| `skills/karpathy-guidelines/SKILL.md` | Karpathy 4-rule discipline. |
+| `mcp-servers/gemini/server.py` | Custom Gemini MCP server. 423 lines. |
+| `plugins/hft-team/agents/*.md` | 24 hft-team specialist agents. |
+| `plans/*.md` | Plan-mode artifacts. Persisted across sessions. |
+| `projects/<slug>/memory/MEMORY.md` + topical files | Per-project auto-memory. |
+
+### `~/claude-archive/` (user-global)
+
+| Path | Purpose |
+|---|---|
+| `YYYY/MM/<project-slug>/<session-id>/transcript.jsonl` | Full session transcript. |
+| `YYYY/MM/<project-slug>/<session-id>/MANIFEST.json` | Archive metadata (timestamp, session_id, cwd, source_transcript). |
+| `YYYY/MM/<project-slug>/<session-id>/CLAUDE.md` | Snapshot of project CLAUDE.md at archive time. |
+| `YYYY/MM/<project-slug>/<session-id>/workbooks/` | Mission workbook snapshots. |
+| `YYYY/MM/<project-slug>/<session-id>/plans/` | Plan-mode artifact snapshots. |
+| `.archive.log` | Audit trail - one line per session archived. |
+
+### Per-project (created by `project-bootstrap`)
+
+| Path | Purpose |
+|---|---|
+| `CLAUDE.md` | Project rules (committed). |
+| `CLAUDE.local.md.template` | Personal layer template (rename to `CLAUDE.local.md` for use; gitignored). |
+| `.claude/settings.json` | Project hooks + permissions. |
+| `.claude/settings.local.json` | Personal allowlist (gitignored). |
+| `.claude/workbooks/INDEX.md` | Mission workbook index. |
+| `.claude/plans/` | Plan-mode artifacts (gitignored). |
+| `docs/<MONTH>_onwards/ADR-001-*.md.template` | Architecture Decision Record template. |
+| `docs/<MONTH>_onwards/ADVISORY-001-*.md.template` | Advisory (living strategic doc) template. |
+| `docs/<MONTH>_onwards/MISSION_X.X_ISSUE_*.md.template` | GitHub-issue-ready mission template. |
+| `docs/<MONTH>_onwards/All_Issues_Latest_<MONTH>_<YEAR>.md` | Regression ledger. |
+| `docs/<MONTH>_onwards/DEFERRED_ISSUES_ROADMAP.md` | Deferred-issues roadmap. |
+| `.githooks/post-commit` | Graphify auto-regen (only if opted in). |
+| `.githooks/pre-push` | Graphify staleness check (only if opted in). |
+
+---
+
+## Appendix B - Troubleshooting
+
+**Hooks aren't firing.**
+Check three things: (1) `chmod +x ~/.claude/hooks/*.sh` - tar can lose the executable bit; (2) the path in `settings.json` uses `~` (Claude Code expands it) not `$HOME` (which it doesn't); (3) `claude` is being launched from the right shell - your hook depends on `jq` and `git` being on PATH.
+
+**Statusline is missing or showing garbage.**
+Check `chmod +x ~/.claude/statusline.sh`. Test it standalone:
+```bash
+echo '{"model":{"display_name":"opus-4.7"},"workspace":{"current_dir":"'$PWD'"},"context_window":{"used_percentage":25}}' | bash ~/.claude/statusline.sh
+```
+If you see `[opus-4.7] <basename> ctx:[██░░░░░░░░░░░░░] 25%`, the script works - Claude Code's wiring is the problem (check `settings.json` `statusLine` section). If you see literal escape codes (`\033[…`), your terminal isn't rendering true-color - switch to Windows Terminal / Alacritty / kitty / iTerm2.
+
+**`claude mcp list` shows MCP as `× Failed` or `! Needs authentication`.**
+For Gemini: `echo $GEMINI_API_KEY` - empty? Re-export. Wrong? Check the key in your password manager.
+For GitHub: `echo $GITHUB_TOKEN`. Same drill.
+For Playwright: `npx playwright install chromium`.
+For Context7: usually network; check `npx @upstash/context7-mcp --help` runs at all.
+
+**`ruflo init` clobbered my settings.**
+Known issue in v3.5.80 - the `--skip-claude` flag is unreliable. After `ruflo init`, diff `~/.claude/settings.json` against the version from your kit and restore manually if needed. Also clean up Ruflo's swarm/sparc skills:
+```bash
+rm -rf ~/.claude/skills/{hooks-automation,pair-programming,skill-builder,sparc-methodology,stream-chain,swarm-advanced,swarm-orchestration,verification-quality} 2>/dev/null
+```
+
+**Verifier fails on `5.1 deny rules (17 entries)` - "expected 17, got X".**
+Your `settings.json` deny list has been edited. Re-merge from the bundle's settings.json or update the verifier's expected count.
+
+**Auto-memory isn't loading.**
+Per-project memory lives at `~/.claude/projects/<sanitized-cwd-path>/memory/MEMORY.md`. The slug is the absolute path with `/` → `-`. If you're not seeing memory loaded, check that directory exists and has a `MEMORY.md`. If it doesn't, Claude Code creates it on first save - but only if you (or Claude) actually save a memory in that project.
+
+**Graphify is slow.**
+First run is always slow - it builds the cache. Subsequent runs are 2–8 s. If yours is 40+ s consistently, you're scanning the wrong directory (running from repo root pulled in `Research/` and `node_modules/`). Scope to your production-code subdirectory, e.g., `cd src && graphify update .`.
+
+**WSL: bash scripts complain about `^M` characters.**
+Line endings problem from Windows transfer. Fix:
+```bash
+sudo apt install dos2unix
+dos2unix ~/.claude/hooks/*.sh ~/.claude/statusline.sh ~/.claude/scripts/*.sh
+```
+
+**Context-window keeps blowing up.**
+Three culprits in order of likelihood: (1) CLAUDE.md is too big - split into auto-memory; (2) you have too many plugins enabled - disable the irrelevant ones; (3) you're not using `/clear` between unrelated tasks. The statusline's `ctx:` bar tells you when to clear.
+
+**The ♻ cache-hit % is consistently below 70%.**
+Something in your stable prefix (system prompt, CLAUDE.md, auto-memory index, skill descriptions, hook output) is changing between calls and invalidating the cache. Common culprits: (1) a `user_prompt_submit.sh` hook that injects content with a constantly-changing field - like a high-precision timestamp or a sequence number - into the `<context>` block; (2) a CLAUDE.md you edited mid-session (the cache invalidates immediately); (3) skill descriptions that include dynamic content (e.g., a date). Diagnosis: open one session, send three trivial prompts, watch the ratio. If it's below 90% on the third turn, your prefix is mutating. Re-read the Layer 2 prompt-cache aside; the fix is almost always to move the dynamic content out of the prefix or to batch related calls in one turn instead of three.
+
+---
+
+## Appendix C - Extending
+
+### Adding your own custom agent
+
+Drop a markdown file at `~/.claude/agents/<your-agent>.md`:
+
+```yaml
+---
+name: my-rust-specialist
+description: Rust 1.85 with tokio, axum, sqlx. Use for Rust code in any project. Read+Write.
+tools: Read, Write, Edit, Grep, Glob, Bash
+model: sonnet
+---
+
+You are a senior Rust engineer. Defaults: tokio for async, axum for HTTP,
+sqlx for DB. Cite line numbers in every code reference. Apply Karpathy
+discipline.
+```
+
+Restart `claude` to pick up the new agent. Test by asking a Rust question and watching whether Claude dispatches your agent (its name should appear in the agent's response).
+
+### Adding your own custom skill
+
+Drop a directory at `~/.claude/skills/<skill-name>/`:
+
+```
+~/.claude/skills/my-skill/
+├── SKILL.md           ← the skill prompt
+├── templates/         ← optional templates
+└── assets/            ← optional helper files
+```
+
+`SKILL.md` frontmatter:
+
+```yaml
+---
+name: my-skill
+description: Use when the user asks to do X. [Pattern-matched against prompts.]
+disable-model-invocation: false
+user-invocable: true
+allowed-tools: Read, Write, Edit, Bash, Glob, Grep
+---
+
+# my-skill
+
+[Body of the skill - what to do, in what order, with what verification gates.]
+```
+
+Test by either typing `/my-skill` (user-invocable) or by phrasing a prompt that matches the description (model-invocable).
+
+### Adding your own custom MCP server
+
+The Gemini MCP server at `~/.claude/mcp-servers/gemini/server.py` is a reference - you can copy its structure for any external service:
+
+```python
+from fastmcp import FastMCP
+mcp = FastMCP("my-service")
+
+@mcp.tool()
+def my_tool(arg: str) -> str:
+    """One-line description for Claude."""
+    return do_something(arg)
+
+if __name__ == "__main__":
+    mcp.run()
+```
+
+Register:
+
+```bash
+claude mcp add -s user my-service "$(which python3)" -- /path/to/your/server.py
+claude mcp list   # confirm ✓ Connected
+```
+
+That's it. Your tools are now first-class in Claude Code.
+
+---
+
+*If this post helped you, tell another developer. The whole field is figuring this out at the same time, and good setups should be public.*
+
+---
+
+---
 
 ## Get the setup
 
