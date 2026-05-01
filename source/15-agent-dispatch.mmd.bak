@@ -1,0 +1,73 @@
+flowchart TB
+    %% =====================================================
+    %% Diagram 15 — Agent dispatch lifecycle (apex → specialists)
+    %% =====================================================
+
+    PROMPT([Multi-domain prompt<br/>e.g. 'p99 doubled overnight'])
+
+    subgraph APEX["Apex Tier"]
+        CTO[hft-cto<br/>Opus · full clearance]
+        SCOPE{Single<br/>domain?}
+    end
+
+    subgraph CHIEF["Chief Tier"]
+        CSE[chief-systems-engineer<br/>how it RUNS]
+        CQR[chief-quant-researcher<br/>what it DECIDES]
+        ARB{Disagreement?<br/>→ ARB}
+    end
+
+    subgraph LEAD["Lead Tier"]
+        LPI[lead-perf-infra-engineer]
+        LPL[lead-platform-engineer]
+        LST[lead-strategy-engineer]
+        LRC[lead-risk-compliance]
+    end
+
+    subgraph SPEC["Specialist Tier (13 owners)"]
+        S1[latency-performance-owner]
+        S2[kernel-network-infra-owner]
+        S3[pipeline-orchestrator-owner]
+        S4[indicators-engine-owner<br/>+ 9 more specialists]
+        CON{Need peer<br/>expertise?}
+    end
+
+    subgraph SYN["Synthesis"]
+        HO[Handover Blocks<br/>Goal · Investigated · Concluded · Next]
+        WB[(.claude/workbooks/<br/>YYYY-MM-DD-slug.md)]
+        ANS[Final synthesis<br/>file:line evidence · 3 perspectives]
+    end
+
+    PROMPT --> CTO --> SCOPE
+    SCOPE -->|YES single specialist| LPI
+    SCOPE -->|NO multi-domain| CSE & CQR
+
+    CSE --> LPI & LPL
+    CQR --> LST & LRC
+
+    CSE -.if conflict.-> ARB
+    CQR -.if conflict.-> ARB
+    ARB -->|binding ADR| CTO
+
+    LPI --> S1 & S2
+    LPL --> S3
+    LST --> S4
+
+    S1 & S2 & S3 & S4 --> CON
+    CON -->|YES CONSULT REQUESTS| CTO
+    CON -->|NO write handover| HO
+
+    HO --> WB --> ANS --> PROMPT
+
+    classDef apexCls   fill:#fef3c7,stroke:#854d0e,stroke-width:2px,color:#1f2937;
+    classDef chiefCls  fill:#fee2e2,stroke:#991b1b,color:#1f2937;
+    classDef leadCls   fill:#fef9c3,stroke:#854d0e,color:#1f2937;
+    classDef specCls   fill:#dcfce7,stroke:#166534,color:#1f2937;
+    classDef synCls    fill:#dbeafe,stroke:#1e40af,color:#1f2937;
+    classDef userCls   fill:#f3f4f6,stroke:#1f2937,color:#1f2937;
+
+    class CTO,SCOPE apexCls;
+    class CSE,CQR,ARB chiefCls;
+    class LPI,LPL,LST,LRC leadCls;
+    class S1,S2,S3,S4,CON specCls;
+    class HO,WB,ANS synCls;
+    class PROMPT userCls;

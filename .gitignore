@@ -1,0 +1,22 @@
+_site/
+.jekyll-cache/
+.jekyll-metadata
+vendor/
+
+vendor/
+.bundle/
+_site/
+.jekyll-cache/
+GEMINI_*.md
+top-1-claude-code-setup.md
+top-1-claude-code-setup.md.bak
+top-1-claude-code-setup.backup.md
+top-1-claude-code-setup (Copy                                            
+  2).md
+node_modules/
+package.json
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+bunfig.toml
+scripts/

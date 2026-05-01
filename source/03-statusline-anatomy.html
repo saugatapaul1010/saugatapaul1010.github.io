@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Statusline anatomy</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    background: #0d1117; color: #e6edf3;
+    width: 1900px; padding: 44px 64px 32px 64px; min-height: 400px; height: auto;
+  }
+  h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px; }
+  .sub { color: #8b949e; font-size: 15px; margin-bottom: 40px; }
+  .terminal {
+    background: #010409; border: 1px solid #30363d; border-radius: 8px;
+    padding: 36px 24px; margin-bottom: 60px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 18px; line-height: 1.4;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+    overflow-x: auto;
+  }
+  .row { white-space: nowrap; letter-spacing: 0.5px; }
+  .dim { color: #6e7681; }
+  /* gradient cells, 15 colors green→red */
+  .c0  { color: #28c850; } .c1  { color: #43c94c; } .c2  { color: #5ecb47; }
+  .c3  { color: #7acc43; } .c4  { color: #95ce3f; } .c5  { color: #b0cf3b; }
+  .c6  { color: #cbd136; } .c7  { color: #e6d232; } .c8  { color: #e4ba33; }
+  .c9  { color: #e3a235; } .c10 { color: #e28936; } .c11 { color: #e07138; }
+  .c12 { color: #df5939; } .c13 { color: #dd403b; } .c14 { color: #dc283c; }
+  .label { color: #e6d232; font-weight: 700; }
+  .green { color: #58a6ff; }
+  .red { color: #ff7b72; }
+  .legend { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px 48px; }
+  .item {
+    background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+    padding: 18px 22px;
+  }
+  .item .k {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    color: #79c0ff; font-size: 16px; font-weight: 700; margin-bottom: 6px;
+  }
+  .item .v { font-size: 14px; line-height: 1.55; color: #c9d1d9; }
+  .item .v strong { color: #ffffff; }
+</style></head>
+<body>
+  <h1>Statusline anatomy — every glyph is a sensor</h1>
+  <div class="sub">A live render of <code>~/.claude/statusline.sh</code> at ~60% context, $0.42 spent, 25k LLM-seconds, 50 lines added.</div>
+
+  <div class="terminal">
+    <div class="row">
+      [<span class="green">opus-4.7</span>] <strong>trading-bot-fmp-experiments</strong><span class="dim"> (dev-test-main)</span>&nbsp;&nbsp;
+      <span class="dim">ctx:</span>[<span class="c0">█</span><span class="c1">█</span><span class="c2">█</span><span class="c3">█</span><span class="c4">█</span><span class="c5">█</span><span class="c6">█</span><span class="c7">█</span><span class="c8">█</span><span class="dim">░░░░░░</span>]
+      <span class="label">60%</span>&nbsp;&nbsp;
+      <span class="dim">5h:</span>[<span class="c0">█</span><span class="c1">█</span><span class="c2">█</span><span class="c3">█</span><span class="dim">░░░░░░░░░░░</span>] <span style="color:#7acc43">28%</span>&nbsp;&nbsp;
+      <span class="dim">7d:</span>[<span class="c0">█</span><span class="c1">█</span><span class="dim">░░░░░░░░░░░░░</span>] <span style="color:#43c94c">14%</span>&nbsp;&nbsp;
+      <span class="dim">$0.42</span>&nbsp;&nbsp;
+      <span class="dim">⏱ 35:14 · ⚡ 12:08</span>&nbsp;&nbsp;
+      <span class="green">+50</span><span class="dim">/</span><span class="red">-10</span>&nbsp;&nbsp;
+      <span class="dim">♻ </span><span style="color:#3fb950">94%</span>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="item">
+      <div class="k">[opus-4.7] dirname (branch)</div>
+      <div class="v">Current model + project basename + git branch. <strong>One-glance</strong> verification you're in the right repo on the right branch.</div>
+    </div>
+    <div class="item">
+      <div class="k">ctx:[████████░░░░░░░] 60%</div>
+      <div class="v"><strong>15-cell × 8-substep gradient bar</strong> — every 1% of context window changes a pixel. Green at low, red near 100. Forces the auto-compact decision into your peripheral vision.</div>
+    </div>
+    <div class="item">
+      <div class="k">5h:[…] 28%   7d:[…] 14%</div>
+      <div class="v">Anthropic's <strong>5-hour and 7-day rate-limit usage</strong>. Same gradient. Tells you when you're about to hit a wall before you hit it.</div>
+    </div>
+    <div class="item">
+      <div class="k">$0.42</div>
+      <div class="v">Cumulative <strong>USD cost</strong> for this session. Hidden when ≤ $0.01 to keep the bar clean during exploration.</div>
+    </div>
+    <div class="item">
+      <div class="k">⏱ 35:14 · ⚡ 12:08</div>
+      <div class="v"><strong>Two clocks.</strong> ⏱ = wall (everything since session start). ⚡ = LLM compute (what Claude was actively doing). The gap between them = tool execution + your idle thinking time.</div>
+    </div>
+    <div class="item">
+      <div class="k">+50/-10</div>
+      <div class="v"><strong>Lines added / removed</strong> across the session. Green/red. Quick sanity check that a "small fix" didn't grow into a 600-line refactor.</div>
+    </div>
+    <div class="item">
+      <div class="k">♻ 94%</div>
+      <div class="v"><strong>Cache-hit ratio</strong> on the prompt-cache. ≥90% green, ≥70% yellow, &lt;70% red. Low ratio = your prompts are too dynamic, costing 10× more.</div>
+    </div>
+    <div class="item">
+      <div class="k">true-color RGB · 1s refresh</div>
+      <div class="v">Per-cell RGB gradient (no 256-color quantization). Refresh interval = 1s. Throttled by Claude Code at ~300 ms between renders.</div>
+    </div>
+  </div>
+</body></html>

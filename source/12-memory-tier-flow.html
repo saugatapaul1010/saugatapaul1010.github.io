@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Memory architecture — what loads when</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+    background:
+      radial-gradient(900px 600px at 50% 30%, rgba(96,165,250,0.10), transparent 70%),
+      linear-gradient(180deg, #0f172a 0%, #020617 100%);
+    width: 1800px; min-height: 1500px; height: auto;
+    padding: 40px 60px 60px 60px;
+    color: #e2e8f0;
+  }
+  h1 {
+    font-size: 38px; font-weight: 800; letter-spacing: -0.5px;
+    text-align: center; color: #f8fafc; margin-bottom: 4px;
+  }
+  .sub {
+    text-align: center; color: #94a3b8; font-size: 16px; margin-bottom: 36px;
+  }
+
+  /* ─── Stage 1: Trigger pills ─── */
+  .triggers {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;
+    max-width: 1100px; margin: 0 auto 24px auto;
+  }
+  .trigger {
+    background: rgba(15,23,42,0.85);
+    border: 2px solid rgba(96,165,250,0.4);
+    border-radius: 14px; padding: 16px 20px; text-align: center;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+  }
+  .trigger .label {
+    font-size: 10px; font-weight: 800; letter-spacing: 2px;
+    color: #93c5fd; text-transform: uppercase; margin-bottom: 6px;
+  }
+  .trigger .what {
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 16px; color: #f1f5f9; font-weight: 700;
+  }
+
+  /* ─── Common arrow ─── */
+  .arrow-down {
+    text-align: center; font-size: 28px; color: #60a5fa; opacity: 0.7;
+    margin: 6px 0;
+  }
+  .arrow-fan {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;
+    text-align: center; font-size: 26px; color: #60a5fa; opacity: 0.6;
+    max-width: 1100px; margin: 4px auto;
+  }
+
+  /* ─── Tier groups ─── */
+  .tier {
+    background: rgba(15,23,42,0.85);
+    border: 1px solid rgba(148,163,184,0.25);
+    border-radius: 14px; padding: 18px 20px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+    border-top: 4px solid;
+  }
+  .tier .badge {
+    display: inline-block;
+    font-size: 10px; font-weight: 800; letter-spacing: 1.5px;
+    padding: 3px 9px; border-radius: 999px;
+    text-transform: uppercase; margin-bottom: 10px;
+  }
+  .tier .name { font-size: 18px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.3px; }
+  .tier .files { display: grid; gap: 6px; font-size: 12.5px; line-height: 1.45; color: #cbd5e1; }
+  .tier .files .row { display: flex; gap: 10px; align-items: baseline; }
+  .tier .files code {
+    font-family: "SF Mono", Menlo, monospace; font-size: 11.5px;
+    background: rgba(148,163,184,0.12); padding: 1px 6px; border-radius: 3px;
+    color: #e2e8f0; flex: 0 0 auto;
+  }
+  .tier .files .desc { color: #94a3b8; font-style: italic; }
+
+  /* Tier color variants */
+  .tier.hot   { border-top-color: #fca5a5; }
+  .tier.hot   .badge { background: rgba(248,113,113,0.18); color: #fca5a5; }
+  .tier.hot   .name  { color: #fca5a5; }
+  .tier.warm  { border-top-color: #fde68a; }
+  .tier.warm  .badge { background: rgba(251,191,36,0.18); color: #fde68a; }
+  .tier.warm  .name  { color: #fde68a; }
+  .tier.cold  { border-top-color: #86efac; }
+  .tier.cold  .badge { background: rgba(74,222,128,0.18); color: #86efac; }
+  .tier.cold  .name  { color: #86efac; }
+
+  .tiers-row {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;
+    max-width: 1500px; margin: 0 auto 24px auto;
+  }
+
+  /* ─── Active session window ─── */
+  .session {
+    margin: 0 auto 24px auto; max-width: 900px;
+    background: rgba(96,165,250,0.10);
+    border: 2px solid rgba(96,165,250,0.4);
+    border-radius: 14px; padding: 20px 26px; text-align: center;
+    box-shadow: 0 6px 24px rgba(96,165,250,0.10);
+  }
+  .session .icon { font-size: 26px; }
+  .session .name { font-size: 20px; font-weight: 800; color: #93c5fd; margin-top: 4px; }
+  .session .desc { font-size: 13px; color: #cbd5e1; margin-top: 4px; line-height: 1.5; }
+  .session .desc code {
+    font-family: "SF Mono", Menlo, monospace; font-size: 11.5px;
+    background: rgba(96,165,250,0.15); padding: 1px 5px; border-radius: 3px; color: #93c5fd;
+  }
+  .session .agents-row {
+    display: flex; gap: 8px; justify-content: center; margin-top: 12px;
+  }
+  .session .agent-chip {
+    font-size: 11px; padding: 3px 9px; border-radius: 999px;
+    background: rgba(167,139,250,0.18); color: #c4b5fd;
+    font-family: "SF Mono", Menlo, monospace;
+  }
+
+  /* ─── Stop hook + archive ─── */
+  .stop {
+    margin: 0 auto 18px auto; max-width: 700px;
+    background: rgba(74,222,128,0.10);
+    border: 2px solid rgba(74,222,128,0.4);
+    border-radius: 14px; padding: 16px 22px; text-align: center;
+    box-shadow: 0 6px 24px rgba(74,222,128,0.10);
+  }
+  .stop .label {
+    font-size: 10px; font-weight: 800; letter-spacing: 2px;
+    color: #86efac; text-transform: uppercase; margin-bottom: 4px;
+  }
+  .stop .what {
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 14px; color: #f1f5f9;
+  }
+  .stop .props {
+    font-size: 12px; color: #cbd5e1; margin-top: 6px; font-style: italic;
+  }
+
+  .archive-card {
+    margin: 0 auto 24px auto; max-width: 1100px;
+    background: rgba(15,23,42,0.85);
+    border: 1px solid rgba(74,222,128,0.3);
+    border-radius: 14px; padding: 18px 22px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+    border-left: 4px solid #86efac;
+  }
+  .archive-card .row {
+    display: grid; grid-template-columns: 240px 1fr; gap: 18px; align-items: center;
+  }
+  .archive-card .icon-col { text-align: center; }
+  .archive-card .icon-col .glyph { font-size: 36px; }
+  .archive-card .icon-col .path {
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 11px; color: #86efac; margin-top: 6px;
+    background: rgba(74,222,128,0.12); padding: 4px 8px; border-radius: 6px;
+    display: inline-block;
+  }
+  .archive-card .body-col .name {
+    font-size: 16px; font-weight: 800; color: #86efac; margin-bottom: 4px;
+  }
+  .archive-card .body-col .desc {
+    font-size: 13px; color: #cbd5e1; line-height: 1.55;
+  }
+  .archive-card .body-col code {
+    font-family: "SF Mono", Menlo, monospace; font-size: 11.5px;
+    background: rgba(148,163,184,0.12); padding: 1px 6px; border-radius: 3px; color: #e2e8f0;
+  }
+
+  /* ─── Future query (5-year retrieval surface) ─── */
+  .future {
+    margin: 0 auto; max-width: 1100px;
+    background: rgba(15,23,42,0.6);
+    border: 1px dashed rgba(148,163,184,0.35);
+    border-radius: 14px; padding: 18px 22px;
+  }
+  .future .head {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+  }
+  .future .head .badge {
+    font-size: 10px; font-weight: 800; letter-spacing: 1.5px;
+    text-transform: uppercase; padding: 3px 9px; border-radius: 999px;
+    background: rgba(148,163,184,0.18); color: #cbd5e1;
+  }
+  .future .head .title {
+    font-size: 15px; font-weight: 700; color: #f1f5f9;
+  }
+  .future .row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .future .opt {
+    background: rgba(15,23,42,0.6);
+    border: 1px solid rgba(148,163,184,0.2);
+    border-radius: 10px; padding: 12px 14px;
+  }
+  .future .opt .name {
+    font-size: 13px; font-weight: 800; color: #93c5fd; margin-bottom: 4px;
+  }
+  .future .opt .desc {
+    font-size: 12px; color: #94a3b8; line-height: 1.4;
+  }
+  .future .opt .desc code {
+    font-family: "SF Mono", Menlo, monospace; font-size: 11px;
+    background: rgba(96,165,250,0.12); padding: 1px 5px; border-radius: 3px; color: #93c5fd;
+  }
+</style></head>
+<body>
+  <h1>Memory architecture — what loads when</h1>
+  <div class="sub">Hot tier (always) · Warm tier (on relevance) · Cold tier (forever)</div>
+
+  <!-- Stage 1: triggers -->
+  <div class="triggers">
+    <div class="trigger">
+      <div class="label">Trigger A</div>
+      <div class="what">claude (launch)</div>
+    </div>
+    <div class="trigger">
+      <div class="label">Trigger B</div>
+      <div class="what">user prompt</div>
+    </div>
+    <div class="trigger">
+      <div class="label">Trigger C</div>
+      <div class="what">/exit</div>
+    </div>
+  </div>
+
+  <div class="arrow-fan"><span>↓ loads hot tier</span><span>↓ loads warm tier</span><span>↓ fires Stop hook</span></div>
+
+  <!-- Stage 2: 3 tiers side by side -->
+  <div class="tiers-row">
+    <div class="tier hot">
+      <div class="badge">Hot tier</div>
+      <div class="name">always loaded on session start</div>
+      <div class="files">
+        <div class="row"><code>~/.claude/CLAUDE.md</code><span class="desc">global rules</span></div>
+        <div class="row"><code>&lt;repo&gt;/CLAUDE.md</code><span class="desc">project rules</span></div>
+        <div class="row"><code>&lt;repo&gt;/CLAUDE.local.md</code><span class="desc">gitignored, personal</span></div>
+        <div class="row"><code>MEMORY.md</code><span class="desc">auto-memory index</span></div>
+      </div>
+    </div>
+    <div class="tier warm">
+      <div class="badge">Warm tier</div>
+      <div class="name">loaded on relevance match</div>
+      <div class="files">
+        <div class="row"><code>feedback_*.md</code><span class="desc">behavioral rules</span></div>
+        <div class="row"><code>project_*.md</code><span class="desc">mission state</span></div>
+        <div class="row"><code>workbooks/*.md</code><span class="desc">episodic memory</span></div>
+        <div class="row"><code>plans/*.md</code><span class="desc">plan-mode artifacts</span></div>
+      </div>
+    </div>
+    <div class="tier cold">
+      <div class="badge">Cold tier</div>
+      <div class="name">stop hook archives, forever</div>
+      <div class="files">
+        <div class="row"><code>transcript.jsonl</code><span class="desc">every you/Claude turn</span></div>
+        <div class="row"><code>MANIFEST.json</code><span class="desc">session_id · cwd · ts</span></div>
+        <div class="row"><code>workbooks/</code><span class="desc">snapshot at /exit</span></div>
+        <div class="row"><code>CLAUDE.md</code><span class="desc">snapshot of rules</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-down">↓</div>
+
+  <!-- Stage 3: active session converges hot + warm -->
+  <div class="session">
+    <span class="icon">🧠</span>
+    <div class="name">Active session window</div>
+    <div class="desc">
+      Hot tier preloads on launch; warm tier loads when prompt matches description. <strong>Claude reasons here.</strong><br>
+      Dispatched agents share the same memory and append handovers back to <code>workbooks/</code> mid-mission.
+    </div>
+    <div class="agents-row">
+      <span class="agent-chip">Explore</span>
+      <span class="agent-chip">Plan</span>
+      <span class="agent-chip">specialist-A</span>
+      <span class="agent-chip">specialist-B</span>
+      <span class="agent-chip">+ N more</span>
+    </div>
+  </div>
+
+  <div class="arrow-down">↓ /exit</div>
+
+  <!-- Stage 4: stop hook -->
+  <div class="stop">
+    <div class="label">Stop hook · async</div>
+    <div class="what">session_stop_archive.sh — 89 lines</div>
+    <div class="props">idempotent (cp -n) · resilient (set -uo pipefail, no -e) · no network</div>
+  </div>
+
+  <div class="arrow-down">↓</div>
+
+  <!-- Stage 5: archive card -->
+  <div class="archive-card">
+    <div class="row">
+      <div class="icon-col">
+        <div class="glyph">🧊</div>
+        <div class="path">~/claude-archive/<br>YYYY/MM/&lt;project&gt;/&lt;sid&gt;/</div>
+      </div>
+      <div class="body-col">
+        <div class="name">Phase-1 lossless archive</div>
+        <div class="desc">
+          Plain files. No DB, no embeddings, no vendor lock-in.<br>
+          ~5–50 MB / active week · ~2 GB / year — a rounding error on any laptop.<br>
+          Three years from now, <code>grep -r "&lt;keyword&gt;" ~/claude-archive/2026/05/</code> still works.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stage 6: 5-year retrieval surface -->
+  <div class="future">
+    <div class="head">
+      <span class="badge">Future query</span>
+      <span class="title">A question typed in 2031 — Claude resolves it via the same archive</span>
+    </div>
+    <div class="row">
+      <div class="opt">
+        <div class="name">Today + years: <code>grep -r</code></div>
+        <div class="desc">Recommended for the first 10–20 GB. Deterministic layout makes any keyword reachable in milliseconds.</div>
+      </div>
+      <div class="opt">
+        <div class="name">Phase 2 (when needed): HNSW overlay</div>
+        <div class="desc">When archive outgrows <code>grep</code>, Ruflo's <code>embeddings_*</code> tools sit <em>on top of</em> the archive — accelerator, not replacement. Source of truth never moves.</div>
+      </div>
+    </div>
+  </div>
+</body></html>

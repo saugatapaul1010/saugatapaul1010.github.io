@@ -1,0 +1,42 @@
+flowchart TD
+    classDef user fill:#dbeafe,stroke:#3b82f6,color:#1f2937
+    classDef cc fill:#fef3c7,stroke:#f59e0b,color:#1f2937
+    classDef skill fill:#dcfce7,stroke:#16a34a,color:#1f2937
+    classDef out fill:#fce7f3,stroke:#db2777,color:#1f2937
+
+    U["You: 'bootstrap this project'<br/>or '/project-bootstrap'"]:::user
+    CC{"Claude Code matches<br/>against skill descriptions"}:::cc
+
+    Auto["Description match<br/>(model-invocable)"]:::cc
+    Slash["Explicit slash command<br/>(user-invocable)"]:::cc
+
+    Load["Skill tool loads<br/>SKILL.md into context"]:::cc
+
+    S1[["project-bootstrap<br/><sub>asks 3 questions, scaffolds files</sub>"]]:::skill
+    S2[["graphify<br/><sub>code → knowledge graph</sub>"]]:::skill
+    S3[["drawio-architect<br/><sub>spec → diagram + vision audit</sub>"]]:::skill
+    S4[["manim-animator<br/><sub>prompt → 3B1B-style animation</sub>"]]:::skill
+    S5[["superpowers/* (12)<br/><sub>brainstorm, plan, TDD, debug, review...</sub>"]]:::skill
+
+    Exec["Skill executes<br/>per its allowed-tools<br/>(Read, Write, Bash, ...)"]:::cc
+
+    Verify["Skill's own<br/>verification block"]:::skill
+    Out["Files / diagrams /<br/>plans created on disk"]:::out
+
+    U --> CC
+    CC --> Auto
+    CC --> Slash
+    Auto --> Load
+    Slash --> Load
+    Load --> S1
+    Load --> S2
+    Load --> S3
+    Load --> S4
+    Load --> S5
+    S1 --> Exec
+    S2 --> Exec
+    S3 --> Exec
+    S4 --> Exec
+    S5 --> Exec
+    Exec --> Verify
+    Verify --> Out

@@ -1,0 +1,49 @@
+sequenceDiagram
+    autonumber
+    participant U as You
+    participant CC as Claude Code
+    participant WB as .claude/workbooks/
+    participant EX as Explore agent
+    participant PL as Plan agent
+    participant SP as Specialist agent
+    participant GE as Gemini MCP
+    participant FS as Project files
+    participant ARC as ~/claude-archive
+
+    U->>CC: "Implement feature X across modules"
+    CC->>WB: open YYYY-MM-DD-feature-x.md
+    Note over CC,WB: Workbook = episodic memory<br/>across all turns of this mission
+
+    par parallel recon
+        CC->>EX: "Find existing patterns for X"
+    and
+        CC->>EX: "Find tests covering X-adjacent code"
+    end
+    EX-->>CC: file paths + line citations
+
+    CC->>PL: "Design implementation given recon"
+    PL-->>CC: written plan w/ verification gates
+
+    CC-->>U: ExitPlanMode (approval requested)
+    U-->>CC: approves
+
+    loop per plan step
+        CC->>SP: dispatch specialist
+        SP->>FS: edits files
+        SP-->>CC: handover block (file:line evidence)
+        CC->>WB: append handover
+    end
+
+    opt adversarial check
+        CC->>GE: gemini_second_opinion(plan, draft)
+        GE-->>CC: red-team feedback
+    end
+
+    CC->>FS: run tests / verifier
+    FS-->>CC: PASS: 38 / REGRESSIONS: 0
+
+    CC->>WB: write Final synthesis, Status: closed
+    U->>CC: /exit
+
+    CC->>ARC: Stop hook archives transcript + WB + plans
+    Note over ARC: Now grep-able forever

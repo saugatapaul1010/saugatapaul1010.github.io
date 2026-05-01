@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Mission lifecycle</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+    background:
+      radial-gradient(1100px 700px at 50% 32%, rgba(167,139,250,0.10), transparent 70%),
+      linear-gradient(180deg, #0f172a 0%, #020617 100%);
+    width: 1800px; min-height: 800px; height: auto;
+    padding: 40px 60px 50px 60px;
+    color: #e2e8f0;
+    position: relative;
+  }
+  h1 {
+    font-size: 38px; font-weight: 800; letter-spacing: -0.5px;
+    text-align: center; color: #f8fafc; margin-bottom: 4px;
+  }
+  .sub {
+    text-align: center; color: #94a3b8; font-size: 16px;
+    margin-bottom: 30px;
+  }
+
+  /* ────────── Participant header strip ────────── */
+  .lanes {
+    display: grid;
+    grid-template-columns: 56px repeat(9, 1fr);
+    gap: 0;
+    margin-bottom: 8px;
+  }
+  .lane-head {
+    text-align: center;
+    padding: 10px 4px;
+    border-radius: 10px;
+    background: rgba(15,23,42,0.85);
+    border: 1px solid rgba(148,163,184,0.25);
+    border-top: 3px solid #94a3b8;
+    margin: 0 5px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+  }
+  .lane-head .icon {
+    font-size: 20px; line-height: 1; display: block; margin-bottom: 4px;
+  }
+  .lane-head .name {
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 11px; font-weight: 700;
+    color: #cbd5e1; line-height: 1.25;
+  }
+  .lane-head .role {
+    font-size: 9.5px; color: #94a3b8; letter-spacing: 1px;
+    text-transform: uppercase; margin-top: 3px;
+  }
+  /* per-actor accents */
+  .lane-head.you   { border-top-color: #cbd5e1; }
+  .lane-head.you   .name { color: #e2e8f0; }
+  .lane-head.cc    { border-top-color: #fde68a; }
+  .lane-head.cc    .name { color: #fde68a; }
+  .lane-head.wb    { border-top-color: #86efac; }
+  .lane-head.wb    .name { color: #86efac; }
+  .lane-head.agent { border-top-color: #c4b5fd; }
+  .lane-head.agent .name { color: #c4b5fd; }
+  .lane-head.mcp   { border-top-color: #f9a8d4; }
+  .lane-head.mcp   .name { color: #f9a8d4; }
+  .lane-head.fs    { border-top-color: #93c5fd; }
+  .lane-head.fs    .name { color: #93c5fd; }
+  .lane-head.arc   { border-top-color: #a3a3a3; }
+  .lane-head.arc   .name { color: #cbd5e1; }
+
+  /* ────────── Phase banner ────────── */
+  .phase {
+    text-align: center;
+    margin: 18px 0 6px 0;
+    padding: 6px 14px;
+    font-size: 11px; font-weight: 800;
+    letter-spacing: 2.5px; text-transform: uppercase;
+    border-radius: 999px;
+    width: 100%;
+  }
+  .phase.setup { background: rgba(96,165,250,0.10); color: #93c5fd; border: 1px solid rgba(96,165,250,0.35); }
+  .phase.recon { background: rgba(167,139,250,0.10); color: #c4b5fd; border: 1px solid rgba(167,139,250,0.35); }
+  .phase.plan  { background: rgba(251,191,36,0.10);  color: #fde68a; border: 1px solid rgba(251,191,36,0.35); }
+  .phase.loop  { background: rgba(74,222,128,0.10);  color: #86efac; border: 1px solid rgba(74,222,128,0.35); }
+  .phase.opt   { background: rgba(244,114,182,0.10); color: #f9a8d4; border: 1px solid rgba(244,114,182,0.35); }
+  .phase.verify{ background: rgba(34,211,238,0.10);  color: #67e8f9; border: 1px solid rgba(34,211,238,0.35); }
+  .phase.exit  { background: rgba(252,165,165,0.08); color: #fca5a5; border: 1px solid rgba(252,165,165,0.30); }
+
+  /* Inline note (sticky pill) */
+  .note {
+    margin: 6px auto 4px auto;
+    max-width: 720px;
+    background: rgba(167,139,250,0.10);
+    border: 1px dashed rgba(167,139,250,0.45);
+    border-radius: 10px;
+    padding: 8px 14px;
+    text-align: center;
+    font-size: 12px; color: #c4b5fd;
+    font-style: italic;
+  }
+
+  /* ────────── Event row (the swimlane row) ────────── */
+  .row {
+    display: grid;
+    grid-template-columns: 56px repeat(9, 1fr);
+    gap: 0;
+    align-items: stretch;
+    position: relative;
+    min-height: 50px;
+  }
+  .lane {
+    position: relative;
+  }
+  .lane::before {
+    content: "";
+    position: absolute;
+    left: 50%; top: 0; bottom: 0;
+    width: 1px;
+    background: rgba(148,163,184,0.12);
+    transform: translateX(-50%);
+  }
+
+  /* Number badge column */
+  .num {
+    display: flex; align-items: center; justify-content: center;
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 11px; font-weight: 700;
+    color: #94a3b8;
+  }
+
+  /* Event bar — absolutely positioned over its row */
+  .evt {
+    position: absolute;
+    top: 50%; transform: translateY(-50%);
+    height: 32px;
+    display: flex; align-items: center;
+    pointer-events: none;
+    z-index: 5;
+  }
+  .evt .body {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px;
+    height: 100%;
+    padding: 0 12px;
+    border-radius: 8px;
+    background: rgba(15, 23, 42, 0.92);
+    border: 1px solid rgba(251,191,36,0.40);
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 12px; color: #e2e8f0;
+    white-space: nowrap;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+  }
+  .evt .tag {
+    font-size: 10px; font-weight: 800; letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 2px 7px; border-radius: 999px;
+    background: rgba(251,191,36,0.18);
+    color: #fde68a;
+  }
+
+  /* Variants */
+  .evt.return .body { border-style: dashed; border-color: rgba(148,163,184,0.45); color: #cbd5e1; }
+  .evt.return .tag  { background: rgba(148,163,184,0.18); color: #cbd5e1; }
+  .evt.recon  .body { border-color: rgba(167,139,250,0.50); }
+  .evt.recon  .tag  { background: rgba(167,139,250,0.18); color: #c4b5fd; }
+  .evt.write  .body { border-color: rgba(134,239,172,0.50); }
+  .evt.write  .tag  { background: rgba(134,239,172,0.18); color: #86efac; }
+  .evt.mcp    .body { border-color: rgba(244,114,182,0.50); }
+  .evt.mcp    .tag  { background: rgba(244,114,182,0.18); color: #f9a8d4; }
+  .evt.verify .body { border-color: rgba(103,232,249,0.50); }
+  .evt.verify .tag  { background: rgba(103,232,249,0.18); color: #67e8f9; }
+  .evt.archive .body{ border-color: rgba(163,163,163,0.50); }
+  .evt.archive .tag { background: rgba(163,163,163,0.20); color: #cbd5e1; }
+
+  /* Arrow caps */
+  .evt .arrow { flex: 0 0 auto; width: 0; height: 0; border-top: 6px solid transparent; border-bottom: 6px solid transparent; }
+  .evt .arrow.right { border-left: 9px solid #fbbf24; }
+  .evt .arrow.left  { border-right: 9px solid #fbbf24; }
+  .evt.return  .arrow.right { border-left-color: #94a3b8; }
+  .evt.return  .arrow.left  { border-right-color: #94a3b8; }
+  .evt.recon   .arrow.right { border-left-color: #a78bfa; }
+  .evt.recon   .arrow.left  { border-right-color: #a78bfa; }
+  .evt.write   .arrow.right { border-left-color: #4ade80; }
+  .evt.write   .arrow.left  { border-right-color: #4ade80; }
+  .evt.mcp     .arrow.right { border-left-color: #f472b6; }
+  .evt.mcp     .arrow.left  { border-right-color: #f472b6; }
+  .evt.verify  .arrow.right { border-left-color: #22d3ee; }
+  .evt.verify  .arrow.left  { border-right-color: #22d3ee; }
+  .evt.archive .arrow.right { border-left-color: #a3a3a3; }
+  .evt.archive .arrow.left  { border-right-color: #a3a3a3; }
+
+  /* Source dot */
+  .evt::before {
+    content: "";
+    position: absolute;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #fbbf24;
+    top: 50%; transform: translateY(-50%);
+    box-shadow: 0 0 0 3px rgba(251,191,36,0.18);
+    z-index: 6;
+  }
+  .evt.from-left::before  { left: -5px; }
+  .evt.from-right::before { right: -5px; }
+  .evt.return::before  { background: #94a3b8; box-shadow: 0 0 0 3px rgba(148,163,184,0.18); }
+  .evt.recon::before   { background: #a78bfa; box-shadow: 0 0 0 3px rgba(167,139,250,0.18); }
+  .evt.write::before   { background: #4ade80; box-shadow: 0 0 0 3px rgba(74,222,128,0.18); }
+  .evt.mcp::before     { background: #f472b6; box-shadow: 0 0 0 3px rgba(244,114,182,0.18); }
+  .evt.verify::before  { background: #22d3ee; box-shadow: 0 0 0 3px rgba(34,211,238,0.18); }
+  .evt.archive::before { background: #a3a3a3; box-shadow: 0 0 0 3px rgba(163,163,163,0.18); }
+
+  /* footer legend */
+  .legend {
+    margin-top: 24px;
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 22px;
+    font-size: 12px; color: #94a3b8;
+  }
+  .legend .key { display: flex; align-items: center; gap: 8px; }
+  .legend .swatch {
+    display: inline-block; width: 28px; height: 0;
+    border-top: 2px solid #fbbf24;
+  }
+  .legend .swatch.dashed  { border-top-style: dashed; border-top-color: #94a3b8; }
+  .legend .swatch.recon   { border-top-color: #a78bfa; }
+  .legend .swatch.write   { border-top-color: #4ade80; }
+  .legend .swatch.mcp     { border-top-color: #f472b6; }
+  .legend .swatch.verify  { border-top-color: #22d3ee; }
+  .legend .swatch.archive { border-top-color: #a3a3a3; }
+</style></head>
+<body>
+  <h1>Mission lifecycle — one feature, end-to-end</h1>
+  <div class="sub">9 actors · 20 events · workbook-rooted, plan-gated, parallel recon, per-step handovers, adversarial check, archive on exit</div>
+
+  <!-- Participant header strip -->
+  <div class="lanes">
+    <div></div>
+    <div class="lane-head you">
+      <span class="icon">🧑‍💻</span>
+      <div class="name">You</div>
+      <div class="role">human</div>
+    </div>
+    <div class="lane-head cc">
+      <span class="icon">🤖</span>
+      <div class="name">Claude Code</div>
+      <div class="role">main</div>
+    </div>
+    <div class="lane-head wb">
+      <span class="icon">📓</span>
+      <div class="name">.claude/<br>workbooks/</div>
+      <div class="role">memory</div>
+    </div>
+    <div class="lane-head agent">
+      <span class="icon">🔍</span>
+      <div class="name">Explore<br>agent</div>
+      <div class="role">recon</div>
+    </div>
+    <div class="lane-head agent">
+      <span class="icon">📐</span>
+      <div class="name">Plan<br>agent</div>
+      <div class="role">design</div>
+    </div>
+    <div class="lane-head agent">
+      <span class="icon">🛠️</span>
+      <div class="name">Specialist<br>agent</div>
+      <div class="role">implement</div>
+    </div>
+    <div class="lane-head mcp">
+      <span class="icon">🔮</span>
+      <div class="name">Gemini<br>MCP</div>
+      <div class="role">oracle</div>
+    </div>
+    <div class="lane-head fs">
+      <span class="icon">📁</span>
+      <div class="name">Project<br>files</div>
+      <div class="role">code</div>
+    </div>
+    <div class="lane-head arc">
+      <span class="icon">🗄️</span>
+      <div class="name">~/claude<br>-archive</div>
+      <div class="role">cold</div>
+    </div>
+  </div>
+
+  <!-- ─── Phase 1: Setup ─── -->
+  <div class="phase setup">▼  Phase 1 · setup the mission  ▼</div>
+
+  <!-- 1: U → CC -->
+  <div class="row">
+    <div class="num">1</div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="evt from-left" style="left: calc(56px + 0.5*((100% - 56px)/9)); right: calc(7.5*((100% - 56px)/9));">
+      <div class="body"><span class="tag">request</span><span>"Implement feature X across modules"</span></div>
+      <div class="arrow right"></div>
+    </div>
+  </div>
+
+  <!-- 2: CC → WB open workbook -->
+  <div class="row">
+    <div class="num">2</div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="evt write from-left" style="left: calc(56px + 1.5*((100% - 56px)/9)); right: calc(6.5*((100% - 56px)/9));">
+      <div class="body"><span class="tag">open</span><span>YYYY-MM-DD-feature-x.md</span></div>
+      <div class="arrow right"></div>
+    </div>
+  </div>
+
+  <div class="note">📓  Workbook = episodic memory shared across all turns of this mission</div>
+
+  <!-- ─── Phase 2: Parallel recon ─── -->
+  <div class="phase recon">▶  Phase 2 · par · parallel recon  ◀</div>
+
+  <!-- 3: CC → EX find patterns -->
+  <div class="row">
+    <div class="num">3</div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="evt recon from-left" style="left: calc(56px + 1.5*((100% - 56px)/9)); right: calc(5.5*((100% - 56px)/9));">
+      <div class="body"><span class="tag">dispatch</span><span>"Find existing patterns for X"</span></div>
+      <div class="arrow right"></div>
+    </div>
+  </div>
+
+  <!-- 4: CC → EX find tests -->
+  <div class="row">
+    <div class="num">4</div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="evt recon from-left" style="left: calc(56px + 1.5*((100% - 56px)/9)); right: calc(5.5*((100% - 56px)/9));">
+      <div class="body"><span class="tag">dispatch</span><span>"Find tests covering X-adjacent code"</span></div>
+      <div class="arrow right"></div>
+    </div>
+  </div>
+
+  <!-- 5: EX ⇠ CC return file paths + line citations -->
+  <div class="row">
+    <div class="num">5</div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="evt return from-right" style="left: calc(56px + 1.5*((100% - 56px)/9)); right: calc(5.5*((100% - 56px)/9));">
+      <div class="arrow left"></div>
+      <div class="body"><span class="tag">return</span><span>file paths + line citations</span></div>
+    </div>
+  </div>
+
+  <!-- ─── Phase 3: Plan & approve ─── -->
+  <div class="phase plan">▼  Phase 3 · design plan · request approval  ▼</div>
+
+  <!-- 6: CC → PL design -->
+  <div class="row">
+    <div class="num">6</div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="evt from-left" style="left: calc(56px + 1.5*((100% - 56px)/9)); right: calc(4.5*((100% - 56px)/9));">
+      <div class="body"><span class="tag">dispatch</span><span>"Design implementation given recon"</span></div>
+      <div class="arrow right"></div>
+    </div>
+  </div>
+
+  <!-- 7: PL ⇠ CC return plan -->
+  <div class="row">
+    <div class="num">7</div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="evt return from-right" style="left: calc(56px + 1.5*((100% - 56px)/9)); right: calc(4.5*((100% - 56px)/9));">
+      <div class="arrow left"></div>
+      <div class="body"><span class="tag">return</span><span>written plan w/ verification gates</span></div>
+    </div>
+  </div>
+
+  <!-- 8: CC ⇠ U ExitPlanMode -->
+  <div class="row">
+    <div class="num">8</div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="evt return from-right" style="left: calc(56px + 0.5*((100% - 56px)/9)); right: calc(7.5*((100% - 56px)/9));">
+      <div class="arrow left"></div>
+      <div class="body"><span class="tag">approval</span><span>ExitPlanMode  ·  approval requested</span></div>
+    </div>
+  </div>
+
+  <!-- 9: U ⇠ CC approves -->
+  <div class="row">
+    <div class="num">9</div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="evt from-left" style="left: calc(56px + 0.5*((100% - 56px)/9)); right: calc(7.5*((100% - 56px)/9));">
+      <div class="body"><span class="tag">approves</span><span>✓  go-ahead</span></div>
+      <div class="arrow right"></div>
+    </div>
+  </div>
+
+  <!-- ─── Phase 4: Per-plan-step loop ─── -->
+  <div class="phase loop">▶  Phase 4 · loop · per plan step  ◀</div>
+
+  <!-- 10: CC → SP dispatch -->
+  <div class="row">
+    <div class="num">10</div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="evt from-left" style="left: calc(56px + 1.5*((100% - 56px)/9)); right: calc(3.5*((100% - 56px)/9));">
+      <div class="body"><span class="tag">dispatch</span><span>specialist for next step</span></div>
+      <div class="arrow right"></div>
+    </div>
+  </div>
+
+  <!-- 11: SP → FS edits files -->
+  <div class="row">
+    <div class="num">11</div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="evt write from-left" style="left: calc(56px + 5.5*((100% - 56px)/9)); right: calc(1.5*((100% - 56px)/9));">
+      <div class="body"><span class="tag">edit</span><span>writes files</span></div>
+      <div class="arrow right"></div>
+    </div>
+  </div>
+
+  <!-- 12: SP ⇠ CC handover block -->
+  <div class="row">
+    <div class="num">12</div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="evt return from-right" style="left: calc(56px + 1.5*((100% - 56px)/9)); right: calc(3.5*((100% - 56px)/9));">
+      <div class="arrow left"></div>
+      <div class="body"><span class="tag">handover</span><span>block w/ file:line evidence</span></div>
+    </div>
+  </div>
+
+  <!-- 13: CC → WB append handover -->
+  <div class="row">
+    <div class="num">13</div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="evt write from-left" style="left: calc(56px + 1.5*((100% - 56px)/9)); right: calc(6.5*((100% - 56px)/9));">
+      <div class="body"><span class="tag">append</span><span>handover → workbook</span></div>
+      <div class="arrow right"></div>
+    </div>
+  </div>
+
+  <!-- ─── Phase 5: Adversarial check (opt) ─── -->
+  <div class="phase opt">◆  Phase 5 · opt · adversarial check  ◆</div>
+
+  <!-- 14: CC → GE second opinion -->
+  <div class="row">
+    <div class="num">14</div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="evt mcp from-left" style="left: calc(56px + 1.5*((100% - 56px)/9)); right: calc(2.5*((100% - 56px)/9));">
+      <div class="body"><span class="tag">mcp call</span><span>gemini_second_opinion(plan, draft)</span></div>
+      <div class="arrow right"></div>
+    </div>
+  </div>
+
+  <!-- 15: GE ⇠ CC red-team feedback -->
+  <div class="row">
+    <div class="num">15</div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="evt return from-right" style="left: calc(56px + 1.5*((100% - 56px)/9)); right: calc(2.5*((100% - 56px)/9));">
+      <div class="arrow left"></div>
+      <div class="body"><span class="tag">return</span><span>red-team feedback</span></div>
+    </div>
+  </div>
+
+  <!-- ─── Phase 6: Verify ─── -->
+  <div class="phase verify">▼  Phase 6 · verify  ▼</div>
+
+  <!-- 16: CC → FS run tests -->
+  <div class="row">
+    <div class="num">16</div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="evt verify from-left" style="left: calc(56px + 1.5*((100% - 56px)/9)); right: calc(1.5*((100% - 56px)/9));">
+      <div class="body"><span class="tag">run</span><span>tests / verifier</span></div>
+      <div class="arrow right"></div>
+    </div>
+  </div>
+
+  <!-- 17: FS ⇠ CC PASS / REGS -->
+  <div class="row">
+    <div class="num">17</div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="evt verify from-right" style="left: calc(56px + 1.5*((100% - 56px)/9)); right: calc(1.5*((100% - 56px)/9));">
+      <div class="arrow left"></div>
+      <div class="body"><span class="tag">✓ green</span><span>PASS: 38  /  REGRESSIONS: 0</span></div>
+    </div>
+  </div>
+
+  <!-- ─── Phase 7: Close & exit ─── -->
+  <div class="phase exit">▼  Phase 7 · close &amp; archive  ▼</div>
+
+  <!-- 18: CC → WB final synthesis -->
+  <div class="row">
+    <div class="num">18</div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="evt write from-left" style="left: calc(56px + 1.5*((100% - 56px)/9)); right: calc(6.5*((100% - 56px)/9));">
+      <div class="body"><span class="tag">write</span><span>Final synthesis  ·  Status: closed</span></div>
+      <div class="arrow right"></div>
+    </div>
+  </div>
+
+  <!-- 19: U → CC /exit -->
+  <div class="row">
+    <div class="num">19</div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="evt from-left" style="left: calc(56px + 0.5*((100% - 56px)/9)); right: calc(7.5*((100% - 56px)/9));">
+      <div class="body"><span class="tag">exit</span><span>/exit</span></div>
+      <div class="arrow right"></div>
+    </div>
+  </div>
+
+  <!-- 20: CC → ARC stop hook archives -->
+  <div class="row">
+    <div class="num">20</div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
+    <div class="evt archive from-left" style="left: calc(56px + 1.5*((100% - 56px)/9)); right: calc(0.5*((100% - 56px)/9));">
+      <div class="body"><span class="tag">Stop hook</span><span>archive transcript + workbook + plans</span></div>
+      <div class="arrow right"></div>
+    </div>
+  </div>
+
+  <div class="note">🗄️  Now grep-able forever — <code style="font-family:'SF Mono',Menlo,monospace;background:rgba(163,163,163,0.18);padding:1px 6px;border-radius:4px;color:#cbd5e1;">~/claude-archive/YYYY/MM/&lt;project&gt;/&lt;sid&gt;/</code></div>
+
+  <div class="legend">
+    <div class="key"><span class="swatch"></span>request / dispatch</div>
+    <div class="key"><span class="swatch dashed"></span>return</div>
+    <div class="key"><span class="swatch recon"></span>recon</div>
+    <div class="key"><span class="swatch write"></span>write</div>
+    <div class="key"><span class="swatch mcp"></span>mcp call</div>
+    <div class="key"><span class="swatch verify"></span>verify</div>
+    <div class="key"><span class="swatch archive"></span>archive</div>
+  </div>
+</body></html>

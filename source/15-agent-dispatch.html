@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Agent dispatch lifecycle — apex to specialists</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+    background:
+      radial-gradient(900px 600px at 50% 22%, rgba(167,139,250,0.10), transparent 70%),
+      linear-gradient(180deg, #0f172a 0%, #020617 100%);
+    width: 1800px; min-height: 1500px; height: auto;
+    padding: 40px 60px 60px 60px;
+    color: #e2e8f0;
+  }
+  h1 {
+    font-size: 38px; font-weight: 800; letter-spacing: -0.5px;
+    text-align: center; color: #f8fafc; margin-bottom: 4px;
+  }
+  .sub {
+    text-align: center; color: #94a3b8; font-size: 16px; margin-bottom: 36px;
+  }
+
+  /* ─── User prompt at top ─── */
+  .prompt-row {
+    display: flex; justify-content: center; margin-bottom: 16px;
+  }
+  .prompt {
+    flex: 0 0 720px;
+    background: rgba(15,23,42,0.85);
+    border: 2px solid rgba(96,165,250,0.4);
+    border-radius: 14px; padding: 16px 22px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+  }
+  .prompt .label {
+    font-size: 10px; font-weight: 800; letter-spacing: 2px;
+    color: #93c5fd; text-transform: uppercase; margin-bottom: 6px;
+  }
+  .prompt .quote {
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 14px; color: #e2e8f0; line-height: 1.5;
+  }
+  .prompt .quote .hi { color: #93c5fd; }
+
+  .arrow-down {
+    text-align: center; font-size: 26px; color: #94a3b8; opacity: 0.7;
+    margin: 6px 0;
+  }
+
+  /* ─── Apex ─── */
+  .apex {
+    margin: 0 auto 16px auto; max-width: 760px;
+    background: rgba(251,191,36,0.10);
+    border: 2px solid rgba(251,191,36,0.45);
+    border-radius: 14px; padding: 18px 24px;
+    box-shadow: 0 6px 24px rgba(251,191,36,0.10);
+    text-align: center;
+  }
+  .apex .label {
+    font-size: 10px; font-weight: 800; letter-spacing: 2px;
+    color: #fbbf24; text-transform: uppercase; margin-bottom: 6px;
+  }
+  .apex .name { font-size: 18px; font-weight: 800; color: #fde68a; letter-spacing: -0.3px; }
+  .apex .role { font-size: 12px; color: #cbd5e1; margin-top: 2px; }
+  .apex .role code {
+    font-family: "SF Mono", Menlo, monospace; font-size: 11px;
+    background: rgba(251,191,36,0.15); padding: 1px 5px; border-radius: 3px; color: #fde68a;
+  }
+
+  /* ─── Decision diamond ─── */
+  .decision {
+    margin: 0 auto; max-width: 540px;
+    background: rgba(251,191,36,0.10);
+    border: 2px solid rgba(251,191,36,0.45);
+    border-radius: 16px; padding: 14px 22px;
+    text-align: center;
+    box-shadow: 0 4px 18px rgba(251,191,36,0.10);
+  }
+  .decision .q-label {
+    font-size: 9.5px; font-weight: 800; letter-spacing: 2px;
+    color: #fbbf24; text-transform: uppercase; margin-bottom: 4px;
+  }
+  .decision .q { font-size: 16px; font-weight: 700; color: #fde68a; }
+
+  .branch-row {
+    display: flex; justify-content: center; align-items: center;
+    margin: 8px 0; gap: 380px;
+  }
+  .branch {
+    font-size: 12px; font-weight: 700;
+    padding: 4px 12px; border-radius: 999px;
+    text-transform: lowercase;
+  }
+  .branch.yes { background: rgba(74,222,128,0.18); color: #86efac; border: 1px solid rgba(74,222,128,0.4); }
+  .branch.no  { background: rgba(167,139,250,0.18); color: #c4b5fd; border: 1px solid rgba(167,139,250,0.4); }
+
+  /* ─── Generic tier card ─── */
+  .tier-row {
+    display: grid; gap: 16px; margin-bottom: 18px;
+    max-width: 1500px; margin-left: auto; margin-right: auto;
+  }
+  .tier-row.r2 { grid-template-columns: 1fr 1fr; }
+  .tier-row.r4 { grid-template-columns: repeat(4, 1fr); }
+  .tier-row.r5 { grid-template-columns: repeat(5, 1fr); }
+
+  .tier-label {
+    font-size: 9.5px; font-weight: 800; letter-spacing: 1.5px;
+    text-transform: uppercase; color: #94a3b8;
+    text-align: center; margin: 6px 0 10px 0;
+  }
+
+  .agent {
+    background: rgba(15,23,42,0.85);
+    border: 1px solid rgba(148,163,184,0.25);
+    border-radius: 12px; padding: 12px 14px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+    border-top: 3px solid;
+    text-align: center;
+  }
+  .agent .name {
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 12.5px; font-weight: 700; margin-bottom: 4px;
+  }
+  .agent .role {
+    font-size: 10.5px; color: #94a3b8; line-height: 1.35;
+  }
+
+  /* Tier color variants */
+  .agent.chief    { border-top-color: #fca5a5; }
+  .agent.chief    .name { color: #fca5a5; }
+  .agent.lead     { border-top-color: #fde68a; }
+  .agent.lead     .name { color: #fde68a; }
+  .agent.spec     { border-top-color: #86efac; }
+  .agent.spec     .name { color: #86efac; }
+  .agent.more     { border-top-color: #94a3b8; }
+  .agent.more     .name { color: #cbd5e1; }
+  .agent.dispatch { border: 2px solid rgba(74,222,128,0.4); border-top: 3px solid #86efac;
+                    background: rgba(74,222,128,0.05); }
+  .agent.dispatch .name { color: #86efac; }
+
+  /* CONSULT loopback row */
+  .consult {
+    margin: 12px auto; max-width: 900px;
+    background: rgba(15,23,42,0.6);
+    border: 1px dashed rgba(167,139,250,0.4);
+    border-radius: 12px; padding: 14px 20px;
+    display: flex; align-items: center; gap: 18px;
+  }
+  .consult .glyph { font-size: 22px; flex: 0 0 auto; color: #c4b5fd; }
+  .consult .text {
+    font-size: 12.5px; color: #cbd5e1; line-height: 1.5;
+  }
+  .consult .text strong { color: #c4b5fd; }
+  .consult .text code {
+    font-family: "SF Mono", Menlo, monospace; font-size: 11px;
+    background: rgba(167,139,250,0.18); padding: 1px 5px; border-radius: 3px; color: #c4b5fd;
+  }
+
+  /* Synthesis pipeline at bottom */
+  .pipeline {
+    display: grid; grid-template-columns: 1fr 60px 1fr 60px 1fr; gap: 0;
+    align-items: center;
+    max-width: 1500px; margin: 0 auto;
+  }
+  .stage {
+    background: rgba(15,23,42,0.85);
+    border: 1px solid rgba(148,163,184,0.25);
+    border-radius: 12px; padding: 16px 18px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+    text-align: center;
+    border-top: 3px solid;
+  }
+  .stage.handover { border-top-color: #93c5fd; }
+  .stage.workbook { border-top-color: #86efac; }
+  .stage.synth    { border-top-color: #f9a8d4; }
+  .stage .icon { font-size: 24px; display: block; margin-bottom: 6px; }
+  .stage .label {
+    font-size: 10px; font-weight: 800; letter-spacing: 1.5px;
+    text-transform: uppercase; margin-bottom: 4px;
+  }
+  .stage.handover .label { color: #93c5fd; }
+  .stage.workbook .label { color: #86efac; }
+  .stage.synth    .label { color: #f9a8d4; }
+  .stage .body { font-size: 11.5px; color: #cbd5e1; line-height: 1.5; }
+  .stage .body code {
+    font-family: "SF Mono", Menlo, monospace; font-size: 10.5px;
+    background: rgba(148,163,184,0.12); padding: 1px 5px; border-radius: 3px; color: #e2e8f0;
+  }
+  .arrow-right {
+    text-align: center; font-size: 30px; color: #94a3b8; opacity: 0.7;
+  }
+
+  /* SVG layer for loopback arrow (consult → apex) */
+  svg.loopback {
+    position: absolute; left: 0; top: 0;
+    width: 1800px; height: 1500px;
+    z-index: 0; pointer-events: none;
+  }
+</style></head>
+<body>
+  <h1>Agent dispatch lifecycle — apex → chiefs → leads → specialists</h1>
+  <div class="sub">Hierarchical decomposition · CONSULT-REQUEST loopback (emulated agent-to-agent) · synthesis writes the workbook</div>
+
+  <!-- Stage 1: User prompt -->
+  <div class="prompt-row">
+    <div class="prompt">
+      <div class="label">User prompt · multi-domain</div>
+      <div class="quote">"<span class="hi">tick-to-publish p99 doubled overnight</span> — find the regression. Be evidence-based."</div>
+    </div>
+  </div>
+
+  <div class="arrow-down">↓ enters apex</div>
+
+  <!-- Stage 2: Apex -->
+  <div class="apex">
+    <div class="label">Apex tier</div>
+    <div class="name">👑 hft-cto</div>
+    <div class="role">Opus · full clearance · <code>decompose</code> + <code>route</code> + <code>merge</code> + <code>final clearance</code></div>
+  </div>
+
+  <div class="arrow-down">↓</div>
+
+  <!-- Stage 3: Decision -->
+  <div class="decision">
+    <div class="q-label">Decision</div>
+    <div class="q">Single domain?</div>
+  </div>
+  <div class="branch-row">
+    <div class="branch yes">↙ YES · single specialist (skip tiers)</div>
+    <div class="branch no">NO · spans domains ↘</div>
+  </div>
+
+  <div class="arrow-down">↓ multi-domain path</div>
+
+  <!-- Stage 4: Chiefs -->
+  <div class="tier-label">Chief tier · two halves of the system</div>
+  <div class="tier-row r2">
+    <div class="agent chief">
+      <div class="name">chief-systems-engineer</div>
+      <div class="role">how it RUNS · platform + perf-infra branches</div>
+    </div>
+    <div class="agent chief">
+      <div class="name">chief-quant-researcher</div>
+      <div class="role">what it DECIDES · strategy + risk-compliance branches</div>
+    </div>
+  </div>
+
+  <div class="arrow-down">↓ delegate to vertical leads</div>
+
+  <!-- Stage 5: Leads -->
+  <div class="tier-label">Lead tier · vertical slices</div>
+  <div class="tier-row r4">
+    <div class="agent lead">
+      <div class="name">lead-perf-infra</div>
+      <div class="role">latency · kernel · pipeline</div>
+    </div>
+    <div class="agent lead">
+      <div class="name">lead-platform</div>
+      <div class="role">SHM · WAL · DB · ingestion</div>
+    </div>
+    <div class="agent lead">
+      <div class="name">lead-strategy</div>
+      <div class="role">indicators · execution · trading-engine</div>
+    </div>
+    <div class="agent lead">
+      <div class="name">lead-risk-compliance</div>
+      <div class="role">governance · observability · release</div>
+    </div>
+  </div>
+
+  <div class="arrow-down">↓ fan out to specialists</div>
+
+  <!-- Stage 6: Specialists -->
+  <div class="tier-label">Specialist tier · 13 owners (4 fired for this mission, in parallel)</div>
+  <div class="tier-row r4">
+    <div class="agent spec dispatch">
+      <div class="name">latency-performance-owner</div>
+      <div class="role">⚡ FIRED · bisects p99 histograms</div>
+    </div>
+    <div class="agent spec dispatch">
+      <div class="name">kernel-network-infra-owner</div>
+      <div class="role">⚡ FIRED · checks IRQ, NIC, kernel pkg</div>
+    </div>
+    <div class="agent spec dispatch">
+      <div class="name">pipeline-orchestrator-owner</div>
+      <div class="role">⚡ FIRED · audits asyncio supervisor + config</div>
+    </div>
+    <div class="agent spec more">
+      <div class="name">+ 9 specialists idle</div>
+      <div class="role">indicators · trading-engine · WAL · …</div>
+    </div>
+  </div>
+
+  <!-- CONSULT loopback -->
+  <div class="consult">
+    <div class="glyph">🔄</div>
+    <div class="text">
+      <strong>CONSULT-REQUEST protocol.</strong>
+      Any specialist can emit <code>═══ CONSULT REQUESTS ═══ → &lt;peer&gt;: "&lt;question&gt;"</code> in its output.
+      Apex sees the block, dispatches the peer in parallel, and feeds the answer back into the requesting specialist's next turn.
+      <strong>Emulated agent-to-agent</strong> — each specialist stays in its lane, no one pretends to expertise it doesn't have.
+    </div>
+  </div>
+
+  <div class="arrow-down">↓ each returns a handover block</div>
+
+  <!-- Stage 7: Synthesis pipeline -->
+  <div class="pipeline">
+    <div class="stage handover">
+      <span class="icon">📝</span>
+      <div class="label">Handover blocks</div>
+      <div class="body">
+        Each specialist returns: <strong>Goal · Investigated (file:line) · Concluded · Recommended next</strong>.
+      </div>
+    </div>
+    <div class="arrow-right">→</div>
+    <div class="stage workbook">
+      <span class="icon">📒</span>
+      <div class="label">Workbook</div>
+      <div class="body">
+        Apex appends every handover to <code>.claude/workbooks/<br>YYYY-MM-DD-&lt;slug&gt;.md</code> — the mission's episodic memory.
+      </div>
+    </div>
+    <div class="arrow-right">→</div>
+    <div class="stage synth">
+      <span class="icon">🎯</span>
+      <div class="label">Final synthesis</div>
+      <div class="body">
+        Apex reads all handovers, cross-validates the three perspectives, and returns the answer with <code>file:line</code> citations and a <strong>recommended action</strong>.
+      </div>
+    </div>
+  </div>
+</body></html>

@@ -1,0 +1,38 @@
+graph TB
+    classDef hot fill:#fef3c7,stroke:#f59e0b,stroke-width:2px,color:#1f2937
+    classDef warm fill:#dbeafe,stroke:#3b82f6,stroke-width:2px,color:#1f2937
+    classDef cold fill:#e5e7eb,stroke:#6b7280,stroke-width:2px,color:#1f2937
+    classDef cap fill:#ffffff,stroke:#1f2937,stroke-width:1px,color:#1f2937
+
+    subgraph HOT["⚡ HOT — loaded every session"]
+        G1["~/.claude/CLAUDE.md<br/><sub>global rules — Karpathy, MCPs, conventions</sub>"]
+        G2["&lt;repo&gt;/CLAUDE.md<br/><sub>project rules — committed, shared</sub>"]
+        G3["&lt;repo&gt;/CLAUDE.local.md<br/><sub>personal layer — gitignored</sub>"]
+        AM["projects/&lt;slug&gt;/memory/MEMORY.md<br/><sub>auto-memory index — feedback / project / user / reference</sub>"]
+    end
+
+    subgraph WARM["🟡 WARM — loaded on relevance"]
+        WB["repo/.claude/workbooks/YYYY-MM-DD-*.md<br/><sub>mission workbooks — episodic, multi-turn</sub>"]
+        TM["projects/&lt;slug&gt;/memory/*.md<br/><sub>topical memory files — pulled by description match</sub>"]
+        PL["~/.claude/plans/*.md<br/><sub>plan-mode artifacts — referenced when resuming</sub>"]
+    end
+
+    subgraph COLD["🧊 COLD — cross-session archive"]
+        AR["~/claude-archive/YYYY/MM/&lt;project&gt;/&lt;session&gt;/<br/><sub>transcript.jsonl + MANIFEST + workbook + plan snapshots</sub>"]
+        AL["~/claude-archive/.archive.log<br/><sub>audit trail — one line per session archived</sub>"]
+    end
+
+    G1 --> AM
+    G2 --> AM
+    G3 --> AM
+    AM --> TM
+    G2 --> WB
+    WB --> AR
+    PL --> AR
+    AM -.snapshot on Stop.-> AR
+    TM -.snapshot on Stop.-> AR
+    WB -.snapshot on Stop.-> AR
+
+    class G1,G2,G3,AM hot
+    class WB,TM,PL warm
+    class AR,AL cold

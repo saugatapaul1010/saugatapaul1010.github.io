@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>The whole stack</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+    background:
+      radial-gradient(1200px 800px at 50% 38%, rgba(120,160,255,0.12), transparent 70%),
+      linear-gradient(180deg, #0f172a 0%, #020617 100%);
+    width: 1800px; height: 1150px;
+    padding: 40px 60px 24px 60px;
+    color: #e2e8f0;
+  }
+  h1 {
+    font-size: 38px; font-weight: 800; letter-spacing: -0.5px;
+    text-align: center; margin-bottom: 4px; color: #f8fafc;
+  }
+  .sub {
+    text-align: center; color: #94a3b8; font-size: 16px;
+    margin-bottom: 26px;
+  }
+
+  /* ────────── Center hub ────────── */
+  .hub {
+    position: absolute; left: 50%; top: 640px; transform: translate(-50%, -50%);
+    width: 240px; height: 240px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #fde68a, #f59e0b 50%, #b45309 100%);
+    box-shadow:
+      0 0 0 8px rgba(251,191,36,0.10),
+      0 0 0 24px rgba(251,191,36,0.06),
+      0 0 60px rgba(251,191,36,0.45);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 10;
+  }
+  .hub .label {
+    font-size: 22px; font-weight: 800; color: #1f2937;
+    text-align: center; letter-spacing: -0.5px;
+  }
+  .hub .ver { font-size: 13px; color: #1f2937; opacity: 0.7; margin-top: 2px; font-family: "SF Mono", Menlo, monospace; }
+  .hub .stat {
+    font-size: 12px; color: #1f2937; opacity: 0.85; margin-top: 14px;
+    font-family: "SF Mono", Menlo, monospace; font-weight: 700;
+    background: rgba(255,255,255,0.4); padding: 4px 10px; border-radius: 999px;
+  }
+
+  /* ────────── 8 satellite panels arranged radially ────────── */
+  .panel {
+    position: absolute; width: 360px;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(148,163,184,0.25);
+    border-radius: 14px; padding: 16px 18px;
+    box-shadow: 0 6px 28px rgba(0,0,0,0.5);
+    backdrop-filter: blur(6px);
+  }
+  .panel .title {
+    font-size: 14px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .panel .icon {
+    width: 26px; height: 26px; border-radius: 7px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 15px;
+  }
+  .panel .body { font-size: 13px; line-height: 1.55; color: #cbd5e1; }
+  .panel .body code {
+    font-family: "SF Mono", Menlo, monospace; font-size: 12px;
+    background: rgba(148,163,184,0.12); padding: 1px 6px; border-radius: 4px;
+    color: #fde68a;
+  }
+  .panel .body strong { color: #f1f5f9; }
+
+  /* Color accents per category */
+  .panel.safety .title { color: #fca5a5; }
+  .panel.safety .icon  { background: rgba(248,113,113,0.18); }
+  .panel.memory .title { color: #93c5fd; }
+  .panel.memory .icon  { background: rgba(96,165,250,0.18); }
+  .panel.skills .title { color: #c4b5fd; }
+  .panel.skills .icon  { background: rgba(167,139,250,0.18); }
+  .panel.agents .title { color: #86efac; }
+  .panel.agents .icon  { background: rgba(74,222,128,0.18); }
+  .panel.mcps   .title { color: #f9a8d4; }
+  .panel.mcps   .icon  { background: rgba(244,114,182,0.18); }
+  .panel.ui     .title { color: #fde68a; }
+  .panel.ui     .icon  { background: rgba(251,191,36,0.18); }
+  .panel.hooks  .title { color: #67e8f9; }
+  .panel.hooks  .icon  { background: rgba(34,211,238,0.18); }
+  .panel.archive .title { color: #a3a3a3; }
+  .panel.archive .icon  { background: rgba(163,163,163,0.18); }
+
+  /* Position each panel — 8 arranged around the central hub.
+     Canvas height 1280, panels ~210px tall, 4-stack: 170 / 410 / 650 / 890 */
+  .p-safety  { left: 60px;   top: 170px; }
+  .p-hooks   { left: 60px;   top: 410px; }
+  .p-memory  { left: 60px;   top: 650px; }
+  .p-archive { left: 60px;   top: 890px; }
+
+  .p-skills  { right: 60px;  top: 170px; }
+  .p-agents  { right: 60px;  top: 410px; }
+  .p-mcps    { right: 60px;  top: 650px; }
+  .p-ui      { right: 60px;  top: 890px; }
+
+  /* SVG layer for connector lines, behind panels */
+  svg.connectors {
+    position: absolute; left: 0; top: 0;
+    width: 1800px; height: 1150px;
+    z-index: 1; pointer-events: none;
+  }
+
+  /* Bottom legend */
+  .legend {
+    position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%);
+    display: flex; gap: 32px; font-size: 12px; color: #94a3b8;
+  }
+  .legend .key { display: flex; align-items: center; gap: 6px; }
+  .legend .swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+</style></head>
+<body>
+  <h1>The whole stack, in one diagram</h1>
+  <div class="sub">Claude Code at the center · 8 supporting subsystems · the layers that compose into a top-1% setup</div>
+
+  <!-- SVG connectors -->
+  <svg class="connectors">
+    <!-- subtle radial lines from hub (900,750) to each panel center -->
+    <defs>
+      <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="rgba(251,191,36,0.6)"/>
+        <stop offset="100%" stop-color="rgba(148,163,184,0.15)"/>
+      </linearGradient>
+    </defs>
+    <!-- left side — endpoints offset slightly inside panel rectangles -->
+    <line x1="900" y1="640" x2="420" y2="248"  stroke="url(#line)" stroke-width="1.5"/>
+    <line x1="900" y1="640" x2="420" y2="488"  stroke="url(#line)" stroke-width="1.5"/>
+    <line x1="900" y1="640" x2="420" y2="728"  stroke="url(#line)" stroke-width="1.5"/>
+    <line x1="900" y1="640" x2="420" y2="968"  stroke="url(#line)" stroke-width="1.5"/>
+    <!-- right side -->
+    <line x1="900" y1="640" x2="1380" y2="248"  stroke="url(#line)" stroke-width="1.5"/>
+    <line x1="900" y1="640" x2="1380" y2="488"  stroke="url(#line)" stroke-width="1.5"/>
+    <line x1="900" y1="640" x2="1380" y2="728"  stroke="url(#line)" stroke-width="1.5"/>
+    <line x1="900" y1="640" x2="1380" y2="968"  stroke="url(#line)" stroke-width="1.5"/>
+  </svg>
+
+  <!-- Center hub -->
+  <div class="hub">
+    <div class="label">Claude Code</div>
+    <div class="ver">v2.1.119</div>
+    <div class="stat">PASS: 38 / REGS: 0</div>
+  </div>
+
+  <!-- LEFT column: input/safety/state/persistence -->
+  <div class="panel safety p-safety">
+    <div class="title"><span class="icon">🛡️</span>Safety net</div>
+    <div class="body">
+      <strong>17 deny rules</strong> · <code>.env</code>, <code>*.pem</code>, <code>id_rsa*</code><br>
+      + <code>pre_tool_use.sh</code> regex guard:<br>
+      <code>cat .env</code> · <code>rm -rf /</code> · <code>curl|bash</code> · fork bombs.<br>
+      <em>Layered defense — neither layer alone is enough.</em>
+    </div>
+  </div>
+
+  <div class="panel hooks p-hooks">
+    <div class="title"><span class="icon">🪝</span>Hooks · 4 lifecycle events</div>
+    <div class="body">
+      <code>SessionStart</code> · workbook hint<br>
+      <code>UserPromptSubmit</code> · cwd + branch + git status<br>
+      <code>PreToolUse</code> · the safety regex above<br>
+      <code>Stop</code> (async) · archives transcript + plans
+    </div>
+  </div>
+
+  <div class="panel memory p-memory">
+    <div class="title"><span class="icon">🧠</span>Memory ladder</div>
+    <div class="body">
+      <strong>Hot</strong> — <code>CLAUDE.md</code> × 3 layers + <code>MEMORY.md</code><br>
+      <strong>Warm</strong> — workbooks · topical memory · plans<br>
+      <strong>Cold</strong> — <code>~/claude-archive/</code><br>
+      <em>Files. No DB. <code>grep</code> works in 2031.</em>
+    </div>
+  </div>
+
+  <div class="panel archive p-archive">
+    <div class="title"><span class="icon">🧊</span>Phase-1 archive</div>
+    <div class="body">
+      Every <code>/exit</code> snapshots the session →<br>
+      <code>~/claude-archive/YYYY/MM/&lt;project&gt;/&lt;sid&gt;/</code><br>
+      transcript · workbooks · plans · CLAUDE.md.<br>
+      <em>~5–50 MB / week. Forever-grep-able.</em>
+    </div>
+  </div>
+
+  <!-- RIGHT column: skills/agents/MCPs/UI -->
+  <div class="panel skills p-skills">
+    <div class="title"><span class="icon">⚙️</span>Skills · the verbs</div>
+    <div class="body">
+      <strong>6 custom</strong> — project-bootstrap · graphify · drawio-architect · manim-animator · karpathy · hft-team<br>
+      + <strong>superpowers</strong> (12 lifecycle skills: brainstorm · plan · TDD · debug · review)
+    </div>
+  </div>
+
+  <div class="panel agents p-agents">
+    <div class="title"><span class="icon">🤖</span>Agents · 36 specialists</div>
+    <div class="body">
+      <strong>12 generic</strong> — backend · frontend · devops · security · TDD · code-review · ai-eng…<br>
+      <strong>24 hft-team</strong> (case study) — apex → chiefs → leads → specialists<br>
+      + <strong>built-ins</strong>: Explore · Plan · general-purpose
+    </div>
+  </div>
+
+  <div class="panel mcps p-mcps">
+    <div class="title"><span class="icon">🔌</span>MCP servers · 5 connected</div>
+    <div class="body">
+      <strong>Gemini</strong> 3.1-pro-preview · second-opinion oracle<br>
+      <strong>GitHub</strong> · <strong>Context7</strong> (live docs) ·<br>
+      <strong>Playwright</strong> · <strong>Ruflo</strong> (memory + HNSW)
+    </div>
+  </div>
+
+  <div class="panel ui p-ui">
+    <div class="title"><span class="icon">🎨</span>UI layer</div>
+    <div class="body">
+      223-line <code>statusline.sh</code> — 15-cell gradient ctx bar · ⏱ wall · ⚡ LLM · ♻ cache-hit % · 5h/7d quota bars · cost.<br>
+      + <strong>explanatory-output-style</strong> plugin.
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="key"><span class="swatch" style="background:#fca5a5"></span>Safety</div>
+    <div class="key"><span class="swatch" style="background:#67e8f9"></span>Hooks</div>
+    <div class="key"><span class="swatch" style="background:#93c5fd"></span>Memory</div>
+    <div class="key"><span class="swatch" style="background:#a3a3a3"></span>Archive</div>
+    <div class="key"><span class="swatch" style="background:#c4b5fd"></span>Skills</div>
+    <div class="key"><span class="swatch" style="background:#86efac"></span>Agents</div>
+    <div class="key"><span class="swatch" style="background:#f9a8d4"></span>MCPs</div>
+    <div class="key"><span class="swatch" style="background:#fde68a"></span>UI</div>
+  </div>
+</body></html>

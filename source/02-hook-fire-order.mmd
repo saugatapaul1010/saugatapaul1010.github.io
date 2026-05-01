@@ -1,0 +1,40 @@
+sequenceDiagram
+    autonumber
+    participant U as You (terminal)
+    participant CC as Claude Code
+    participant H1 as session_start.sh
+    participant H2 as user_prompt_submit.sh
+    participant H3 as pre_tool_use.sh
+    participant H4 as session_stop_archive.sh
+    participant FS as Filesystem
+    participant ARC as ~/claude-archive
+
+    U->>CC: claude (launch)
+    CC->>H1: SessionStart fires
+    H1->>FS: ls .claude/workbooks/
+    H1-->>CC: workbook hint (≤200 tok)
+
+    loop every prompt
+      U->>CC: types a prompt
+      CC->>H2: UserPromptSubmit fires
+      H2->>FS: pwd, git branch, git status
+      H2-->>CC: <context> block (≤30 lines)
+      CC->>CC: reasons / plans / writes
+      CC->>H3: PreToolUse on Bash / Edit / Write
+      H3->>H3: regex check (.env, rm -rf /, curl|bash, fork-bomb)
+      alt safe
+        H3-->>CC: exit 0 (allow)
+        CC->>FS: tool runs
+      else unsafe
+        H3-->>CC: exit 2 + BLOCKED message
+        CC-->>U: tool blocked, ask for safer command
+      end
+    end
+
+    U->>CC: Ctrl+D / /exit
+    CC->>H4: Stop fires (async)
+    H4->>FS: read transcript_path, cwd, session_id
+    H4->>ARC: cp -n transcript + CLAUDE.md + workbooks + plans
+    H4->>ARC: write MANIFEST.json
+    H4->>ARC: append .archive.log line
+    H4-->>CC: exit 0

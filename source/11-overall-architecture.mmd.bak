@@ -1,0 +1,90 @@
+flowchart TB
+    %% =====================================================
+    %% Diagram 11 — The Top-1% Claude Code Setup, all layers
+    %% Layout: TB with the orchestration core at the centre,
+    %% surrounding subsystems grouped into three rows.
+    %% =====================================================
+
+    USER([Developer])
+
+    %% --- top row: feedback + safety -------------------------
+    subgraph SAFETY["Layer 1 — Safety Net"]
+        direction LR
+        DENY[permissions.deny<br/>17 rules]
+        HOOKS[4 hooks<br/>SessionStart · UserPromptSubmit<br/>PreToolUse · Stop]
+    end
+
+    SL[Statusline Layer 2<br/>cache · wall · LLM · ctx]
+
+    %% --- centre row: orchestration --------------------------
+    CC[Claude Code core<br/>session loop + tool router]
+
+    %% --- middle row: skills & agents ------------------------
+    subgraph SKILLS["Layer 4 — Skills"]
+        direction LR
+        SP[superpowers<br/>12 lifecycle skills]
+        CSK[Custom skills<br/>graphify · drawio · manim · karpathy]
+    end
+
+    subgraph AGENTS["Layer 5 — Agents"]
+        direction LR
+        GA[12 generic agents<br/>backend · frontend · devops]
+        HA[hft-team plugin<br/>24-agent hierarchy]
+    end
+
+    %% --- bottom row: external + memory + boot + kit ---------
+    subgraph MCPS["Layer 6 — MCP Fleet"]
+        direction LR
+        GEM[Gemini MCP<br/>custom Python · 423 LOC]
+        EXT[GitHub · Context7<br/>Playwright · Ruflo]
+    end
+
+    subgraph MEMORY["Layer 3 — Memory Ladder"]
+        direction LR
+        HOT[Hot tier<br/>CLAUDE.md + MEMORY.md]
+        WARM[Warm tier<br/>workbooks + topical memory]
+        COLD[(Cold tier<br/>~/claude-archive/<br/>grep-able forever)]
+    end
+
+    BOOT[Layer 8 — project-bootstrap<br/>14 templates · 3-question wizard]
+    KIT[Layer 9 — Portable Kit<br/>65MB tarball + verifier]
+
+    %% --- edges: developer → core ---------------------------
+    USER -->|prompt| CC
+    CC -->|render state| SL
+
+    %% --- safety wraps the core -----------------------------
+    SAFETY -.guards every tool call.-> CC
+
+    %% --- core invokes skills + dispatches agents -----------
+    CC -->|invoke| SKILLS
+    CC -->|dispatch| AGENTS
+
+    %% --- core uses MCPs + memory --------------------------
+    CC -->|tools + 2nd opinion| MCPS
+    CC -->|loads context| MEMORY
+    HOOKS -->|Stop archives| COLD
+
+    %% --- bootstrap + kit feed in -------------------------
+    BOOT -->|scaffolds new project| CC
+    KIT  -.replicates whole setup.-> CC
+
+    classDef coreCls   fill:#fef3c7,stroke:#1f2937,stroke-width:3px,color:#1f2937;
+    classDef ulCls     fill:#fee2e2,stroke:#991b1b,color:#1f2937;
+    classDef memCls    fill:#dbeafe,stroke:#1e40af,color:#1f2937;
+    classDef skillCls  fill:#dcfce7,stroke:#166534,color:#1f2937;
+    classDef agentCls  fill:#ede9fe,stroke:#5b21b6,color:#1f2937;
+    classDef mcpCls    fill:#fef9c3,stroke:#854d0e,color:#1f2937;
+    classDef bootCls   fill:#fce7f3,stroke:#9d174d,color:#1f2937;
+    classDef kitCls    fill:#e0f2fe,stroke:#075985,color:#1f2937;
+    classDef userCls   fill:#f3f4f6,stroke:#1f2937,color:#1f2937;
+
+    class CC,SL coreCls;
+    class DENY,HOOKS ulCls;
+    class HOT,WARM,COLD memCls;
+    class SP,CSK skillCls;
+    class GA,HA agentCls;
+    class GEM,EXT mcpCls;
+    class BOOT bootCls;
+    class KIT kitCls;
+    class USER userCls;

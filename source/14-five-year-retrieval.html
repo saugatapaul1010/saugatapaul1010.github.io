@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>5-year retrieval — today's session, 2031's question</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+    background:
+      radial-gradient(1100px 700px at 50% 28%, rgba(74,222,128,0.10), transparent 70%),
+      linear-gradient(180deg, #0f172a 0%, #020617 100%);
+    width: 1800px; height: auto;
+    padding: 40px 60px 36px 60px;
+    color: #e2e8f0;
+  }
+  h1 {
+    font-size: 38px; font-weight: 800; letter-spacing: -0.5px;
+    text-align: center; color: #f8fafc; margin-bottom: 4px;
+  }
+  .sub {
+    text-align: center; color: #94a3b8; font-size: 16px; margin-bottom: 36px;
+  }
+
+  /* ─── 6-column timeline ─── */
+  .timeline {
+    display: grid; grid-template-columns: repeat(6, 1fr);
+    gap: 14px; margin-bottom: 30px;
+  }
+  .col-label {
+    text-align: center;
+    font-size: 9.5px; font-weight: 800; letter-spacing: 1.5px;
+    text-transform: uppercase; color: #94a3b8;
+    margin-bottom: 6px;
+  }
+  .col {
+    background: rgba(15,23,42,0.85);
+    border: 1px solid rgba(148,163,184,0.25);
+    border-radius: 14px; padding: 16px 14px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+    border-top: 3px solid;
+    min-height: 320px;
+  }
+  .col .stage {
+    font-size: 10px; font-weight: 800; letter-spacing: 1.4px;
+    text-transform: uppercase; margin-bottom: 4px;
+  }
+  .col .name {
+    font-size: 15px; font-weight: 800; color: #f1f5f9; margin-bottom: 10px;
+    letter-spacing: -0.2px;
+  }
+  .col .body {
+    font-size: 11.5px; line-height: 1.5; color: #cbd5e1;
+  }
+  .col .body code {
+    font-family: "SF Mono", Menlo, monospace; font-size: 10.5px;
+    background: rgba(148,163,184,0.12); padding: 1px 5px; border-radius: 3px;
+    color: #e2e8f0;
+  }
+  .col .body strong { color: #f1f5f9; }
+  .col ul { list-style: none; padding: 0; margin-top: 6px; }
+  .col ul li {
+    font-size: 11px; color: #cbd5e1; padding: 3px 0;
+    display: flex; align-items: baseline; gap: 6px;
+  }
+  .col ul li::before {
+    content: "•"; color: #94a3b8; font-weight: 800;
+  }
+
+  /* Color variants per column */
+  .col.today  { border-top-color: #fde68a; }
+  .col.today  .stage { color: #fde68a; }
+  .col.stop   { border-top-color: #fca5a5; }
+  .col.stop   .stage { color: #fca5a5; }
+  .col.phase1 { border-top-color: #86efac; }
+  .col.phase1 .stage { color: #86efac; }
+  .col.scale  { border-top-color: #fde68a; }
+  .col.scale  .stage { color: #fde68a; }
+  .col.phase2 { border-top-color: #c4b5fd; }
+  .col.phase2 .stage { color: #c4b5fd; }
+  .col.future { border-top-color: #93c5fd; }
+  .col.future .stage { color: #93c5fd; }
+
+  /* Decision diamond inside scale column */
+  .diamond {
+    background: rgba(251,191,36,0.10);
+    border: 1.5px solid rgba(251,191,36,0.5);
+    border-radius: 8px; padding: 10px 12px; text-align: center;
+    margin-bottom: 8px;
+  }
+  .diamond .q {
+    font-size: 12px; font-weight: 700; color: #fde68a;
+  }
+  .branch {
+    display: flex; gap: 8px; margin-top: 4px;
+  }
+  .branch .pill {
+    flex: 1; font-size: 10px; padding: 4px 6px; border-radius: 6px;
+    text-align: center; font-weight: 700;
+  }
+  .branch .pill.no  { background: rgba(248,113,113,0.18); color: #fca5a5; }
+  .branch .pill.yes { background: rgba(74,222,128,0.18); color: #86efac; }
+
+  /* Chevron between columns */
+  .chevrons {
+    position: relative;
+    display: grid; grid-template-columns: repeat(6, 1fr);
+    margin-top: -20px; margin-bottom: 24px;
+    height: 0;
+  }
+  .chevron {
+    position: relative;
+    text-align: right; padding-right: -20px;
+    color: #94a3b8; opacity: 0.7; font-size: 24px;
+    transform: translateX(50%);
+  }
+
+  /* Highlight strip at bottom */
+  .highlight {
+    background: rgba(74,222,128,0.08);
+    border: 1.5px solid rgba(74,222,128,0.4);
+    border-radius: 14px; padding: 18px 26px;
+    box-shadow: 0 6px 24px rgba(74,222,128,0.10);
+    display: flex; align-items: center; gap: 22px;
+  }
+  .highlight .icon {
+    font-size: 36px; flex: 0 0 auto;
+  }
+  .highlight .text {
+    font-size: 14.5px; line-height: 1.55; color: #e2e8f0;
+  }
+  .highlight .text strong { color: #86efac; }
+  .highlight .text code {
+    font-family: "SF Mono", Menlo, monospace; font-size: 12px;
+    background: rgba(74,222,128,0.12); padding: 1px 5px; border-radius: 3px; color: #86efac;
+  }
+
+  /* MANIFEST snippet inline */
+  .manifest {
+    background: rgba(15,23,42,0.92);
+    border: 1px solid rgba(148,163,184,0.25);
+    border-radius: 8px; padding: 8px 10px;
+    margin-top: 8px;
+    font-family: "SF Mono", Menlo, monospace; font-size: 9.5px;
+    color: #cbd5e1; line-height: 1.4;
+  }
+  .manifest .key { color: #93c5fd; }
+  .manifest .val { color: #fde68a; }
+</style></head>
+<body>
+  <h1>5-year retrieval — today's session, 2031's question</h1>
+  <div class="sub">Plain-file archive · deterministic layout · <code style="font-family:'SF Mono',Menlo,monospace; background:rgba(148,163,184,0.12); padding:1px 5px; border-radius:3px; color:#e2e8f0;">grep</code>-able forever · HNSW overlay only when scale demands it</div>
+
+  <!-- Column labels strip -->
+  <div class="timeline" style="margin-bottom: -4px;">
+    <div class="col-label">Step 1 · today</div>
+    <div class="col-label">Step 2 · /exit</div>
+    <div class="col-label">Step 3 · phase 1</div>
+    <div class="col-label">Step 4 · scale</div>
+    <div class="col-label">Step 5 · phase 2 (future)</div>
+    <div class="col-label">Step 6 · 2031</div>
+  </div>
+
+  <!-- Timeline columns -->
+  <div class="timeline">
+
+    <div class="col today">
+      <div class="stage">Active</div>
+      <div class="name">Today's session</div>
+      <div class="body">
+        Active workbook + handover blocks + decisions all live in <code>.claude/workbooks/</code>.<br>
+        Auto-memory captures durable rules.
+      </div>
+    </div>
+
+    <div class="col stop">
+      <div class="stage">Async</div>
+      <div class="name">Stop hook</div>
+      <div class="body">
+        <code>session_stop_archive.sh</code> · 89 lines<br>
+        <code>set -uo pipefail</code> (no <code>-e</code>) — every step <code>|| true</code>.
+        Idempotent <code>cp -n</code>.
+        <ul>
+          <li>copy transcript</li>
+          <li>copy workbooks + plans</li>
+          <li>snapshot CLAUDE.md</li>
+          <li>write MANIFEST.json</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="col phase1">
+      <div class="stage">Forever</div>
+      <div class="name">Phase-1 archive</div>
+      <div class="body">
+        <code>~/claude-archive/<br>YYYY/MM/&lt;project&gt;/&lt;sid&gt;/</code><br>
+        Plain files. No DB. No vendor lock-in.
+        <div class="manifest">
+{<br>
+&nbsp;&nbsp;<span class="key">"archived_at"</span>: <span class="val">"2026-05-01T..."</span>,<br>
+&nbsp;&nbsp;<span class="key">"session_id"</span>: <span class="val">"124ef7..."</span>,<br>
+&nbsp;&nbsp;<span class="key">"project_slug"</span>: <span class="val">"binance_robust"</span><br>
+}
+        </div>
+      </div>
+    </div>
+
+    <div class="col scale">
+      <div class="stage">Decision</div>
+      <div class="name">Scale check</div>
+      <div class="body">
+        <div class="diamond">
+          <div class="q">archive &gt; 10 GB?</div>
+          <div class="branch">
+            <span class="pill no">no</span>
+            <span class="pill yes">yes</span>
+          </div>
+        </div>
+        <strong>NO</strong> — stay on grep (recommended for years).<br>
+        <strong>YES</strong> — build HNSW overlay nightly.
+      </div>
+    </div>
+
+    <div class="col phase2">
+      <div class="stage">Overlay</div>
+      <div class="name">Phase-2 (when needed)</div>
+      <div class="body">
+        Ruflo <code>embeddings_*</code> tools build an HNSW vector index <em>on top of</em> the archive.
+        <ul>
+          <li>incremental nightly</li>
+          <li>archive stays plain files</li>
+          <li>accelerator, NOT replacement</li>
+          <li>swap-in for any embedding model</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="col future">
+      <div class="stage">Year 2031</div>
+      <div class="name">Future query</div>
+      <div class="body">
+        <em>"Why did we decide X back in 2026?"</em><br><br>
+        Claude opens <code>~/claude-archive/</code>, runs <code>grep</code> + path heuristics (or <code>embeddings_search</code>), surfaces the exact workbook with the original <code>file:line</code> rationale.
+      </div>
+    </div>
+  </div>
+
+  <!-- Highlight strip -->
+  <div class="highlight">
+    <div class="icon">🪨</div>
+    <div class="text">
+      <strong>The source of truth never moves.</strong>
+      The archive is always plain files; the HNSW layer is always an accelerator that you can rebuild from scratch any night and never need to migrate.
+      That property is the entire reason this design survives a five-year horizon — your durability doesn't depend on Anthropic, on Ruflo, on any vendor still being around.
+      It depends on <code>cp</code> and <code>grep</code>, both of which will outlive all of us.
+    </div>
+  </div>
+</body></html>

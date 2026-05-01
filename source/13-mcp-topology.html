@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>MCP fleet — production today + extension slots tomorrow</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+    background:
+      radial-gradient(900px 600px at 50% 25%, rgba(244,114,182,0.10), transparent 70%),
+      linear-gradient(180deg, #0f172a 0%, #020617 100%);
+    width: 1800px; height: auto;
+    padding: 40px 60px 36px 60px;
+    color: #e2e8f0;
+  }
+  h1 {
+    font-size: 38px; font-weight: 800; letter-spacing: -0.5px;
+    text-align: center; color: #f8fafc; margin-bottom: 4px;
+  }
+  .sub {
+    text-align: center; color: #94a3b8; font-size: 16px; margin-bottom: 40px;
+  }
+
+  /* ─── Center router (column 2) ─── */
+  .core {
+    background: rgba(96,165,250,0.10);
+    border: 2px solid rgba(96,165,250,0.4);
+    border-radius: 14px; padding: 18px 22px;
+    box-shadow: 0 6px 24px rgba(96,165,250,0.10);
+    text-align: center;
+  }
+  .core .label {
+    font-size: 10px; font-weight: 800; letter-spacing: 2px;
+    color: #93c5fd; text-transform: uppercase; margin-bottom: 6px;
+  }
+  .core .name { font-size: 18px; font-weight: 800; color: #f1f5f9; margin-bottom: 4px; }
+  .core .desc { font-size: 12px; color: #cbd5e1; line-height: 1.5; }
+  .core .desc code {
+    font-family: "SF Mono", Menlo, monospace; font-size: 11.5px;
+    background: rgba(96,165,250,0.18); padding: 1px 5px; border-radius: 3px; color: #93c5fd;
+  }
+  .router-glyph {
+    font-size: 30px; margin-bottom: 6px;
+  }
+
+  /* ─── Three-column layout: PRODUCTION | CORE | EXTENSION ─── */
+  .grid {
+    display: grid; grid-template-columns: 1fr 380px 1fr; gap: 40px;
+    max-width: 1700px; margin: 0 auto;
+    align-items: start;
+  }
+  .col-head {
+    text-align: center;
+    font-size: 14px; font-weight: 800; letter-spacing: 1.5px;
+    text-transform: uppercase; margin-bottom: 16px;
+  }
+  .col-head.prod { color: #f9a8d4; }
+  .col-head.ext  { color: #94a3b8; }
+
+  .col-stack { display: grid; gap: 14px; }
+
+  /* ─── MCP card ─── */
+  .mcp {
+    background: rgba(15,23,42,0.85);
+    border: 1px solid rgba(148,163,184,0.25);
+    border-radius: 12px; padding: 14px 16px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+    display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: center;
+    border-left: 4px solid;
+  }
+  .mcp .icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; font-size: 20px;
+  }
+  .mcp .body {}
+  .mcp .body .name {
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 14px; font-weight: 700; margin-bottom: 2px;
+  }
+  .mcp .body .desc { font-size: 11.5px; color: #cbd5e1; line-height: 1.4; }
+  .mcp .body .desc code {
+    font-family: "SF Mono", Menlo, monospace; font-size: 10.5px;
+    background: rgba(148,163,184,0.12); padding: 1px 4px; border-radius: 3px; color: #e2e8f0;
+  }
+
+  /* Production palette (pink) */
+  .mcp.prod { border-left-color: #f9a8d4; }
+  .mcp.prod .icon { background: rgba(244,114,182,0.18); }
+  .mcp.prod .name { color: #f9a8d4; }
+
+  /* Extension palette (slate, dashed) */
+  .mcp.ext {
+    border: 1px dashed rgba(148,163,184,0.4);
+    border-left: 4px dashed #94a3b8;
+    background: rgba(15,23,42,0.6);
+  }
+  .mcp.ext .icon { background: rgba(148,163,184,0.12); }
+  .mcp.ext .name { color: #cbd5e1; }
+  .mcp.ext .body .desc { color: #94a3b8; }
+
+  /* ─── Connector arrows between center and side columns ─── */
+  .arrow-side {
+    text-align: center; font-size: 22px; color: #94a3b8; opacity: 0.5;
+    margin: 10px 0;
+  }
+
+  /* ─── Pattern caption at the bottom ─── */
+  .caption {
+    margin: 36px auto 0 auto; max-width: 1200px;
+    background: rgba(15,23,42,0.6);
+    border: 1px dashed rgba(148,163,184,0.3);
+    border-radius: 12px; padding: 16px 22px;
+    display: flex; gap: 24px; align-items: center;
+  }
+  .caption .icon { font-size: 30px; flex: 0 0 auto; }
+  .caption .text {
+    font-size: 13px; color: #cbd5e1; line-height: 1.55;
+  }
+  .caption .text strong { color: #f1f5f9; }
+  .caption .text code {
+    font-family: "SF Mono", Menlo, monospace; font-size: 11.5px;
+    background: rgba(96,165,250,0.18); padding: 1px 5px; border-radius: 3px; color: #93c5fd;
+  }
+
+  /* Center wrapper to align with cards */
+  .core-wrap { display: flex; flex-direction: column; gap: 12px; padding-top: 32px; }
+  .core-wrap .strap {
+    text-align: center; font-size: 11px; color: #94a3b8;
+    font-family: "SF Mono", Menlo, monospace;
+  }
+  .core-wrap .arrow {
+    text-align: center; font-size: 24px; color: #93c5fd; opacity: 0.7;
+  }
+  .core-wrap .router-stat {
+    background: rgba(15,23,42,0.85);
+    border: 1px solid rgba(96,165,250,0.3);
+    border-radius: 12px; padding: 12px 16px; text-align: center;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+  }
+  .core-wrap .router-stat .label {
+    font-size: 9.5px; font-weight: 800; letter-spacing: 1.5px;
+    color: #93c5fd; text-transform: uppercase; margin-bottom: 4px;
+  }
+  .core-wrap .router-stat .what {
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 12px; color: #f1f5f9;
+  }
+</style></head>
+<body>
+  <h1>MCP fleet — production today, extension slots tomorrow</h1>
+  <div class="sub">Five MCPs in production · model-agnostic extension via the same JSON-RPC pattern · any LLM, any internal system</div>
+
+  <div class="grid">
+    <!-- LEFT COLUMN: Production -->
+    <div>
+      <div class="col-head prod">Production MCPs · 5 connected</div>
+      <div class="col-stack">
+
+        <div class="mcp prod">
+          <div class="icon">💎</div>
+          <div class="body">
+            <div class="name">gemini</div>
+            <div class="desc">custom Python · 423 LOC · <code>thinking_budget=-1</code> · second-opinion oracle</div>
+          </div>
+        </div>
+
+        <div class="mcp prod">
+          <div class="icon">🐙</div>
+          <div class="body">
+            <div class="name">github</div>
+            <div class="desc"><code>@modelcontextprotocol/server-github</code> · multi-step PR triage, complex issue filters</div>
+          </div>
+        </div>
+
+        <div class="mcp prod">
+          <div class="icon">📚</div>
+          <div class="body">
+            <div class="name">context7</div>
+            <div class="desc"><code>@upstash/context7-mcp</code> · current library docs (beats stale training data)</div>
+          </div>
+        </div>
+
+        <div class="mcp prod">
+          <div class="icon">🎭</div>
+          <div class="body">
+            <div class="name">playwright</div>
+            <div class="desc"><code>@playwright/mcp</code> · headless browser · screenshots, e2e, scraping</div>
+          </div>
+        </div>
+
+        <div class="mcp prod">
+          <div class="icon">🧩</div>
+          <div class="body">
+            <div class="name">ruflo (curated)</div>
+            <div class="desc"><code>memory_*</code> · <code>agentdb_*</code> · <code>embeddings_*</code> — Phase-2 backbone for the archive</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- CENTER COLUMN: Claude Code → Tool Router -->
+    <div class="core-wrap">
+      <div class="core">
+        <div class="router-glyph">🎯</div>
+        <div class="label">Claude Code</div>
+        <div class="name">MCP client</div>
+        <div class="desc">picks tool by description match</div>
+      </div>
+      <div class="arrow">↕</div>
+      <div class="router-stat">
+        <div class="label">Tool router</div>
+        <div class="what">JSON-RPC over stdio · async dispatch</div>
+      </div>
+      <div class="strap">register: <code>claude mcp add -s user &lt;name&gt; ...</code></div>
+    </div>
+
+    <!-- RIGHT COLUMN: Extension slots -->
+    <div>
+      <div class="col-head ext">Extension slots · same pattern, any LLM</div>
+      <div class="col-stack">
+
+        <div class="mcp ext">
+          <div class="icon">🦙</div>
+          <div class="body">
+            <div class="name">llama (Ollama)</div>
+            <div class="desc">local · sovereign · offline · point at <code>localhost:11434</code></div>
+          </div>
+        </div>
+
+        <div class="mcp ext">
+          <div class="icon">🤖</div>
+          <div class="body">
+            <div class="name">gpt (OpenAI)</div>
+            <div class="desc">frontier alternative · same shape as gemini server, swap the client</div>
+          </div>
+        </div>
+
+        <div class="mcp ext">
+          <div class="icon">🌬️</div>
+          <div class="body">
+            <div class="name">mistral / deepseek / cohere</div>
+            <div class="desc">any API-reachable model · <code>requests.post(...)</code> + 20 lines of Python</div>
+          </div>
+        </div>
+
+        <div class="mcp ext">
+          <div class="icon">🗄️</div>
+          <div class="body">
+            <div class="name">your-internal-db-mcp</div>
+            <div class="desc">any internal system · ticketing, telemetry, custom database — Claude calls it as a first-class tool</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Pattern caption -->
+  <div class="caption">
+    <div class="icon">🔌</div>
+    <div class="text">
+      <strong>The whole topology never has to change as you add models.</strong> An MCP server is a small process speaking JSON-RPC over stdio.
+      Twenty lines of Python wraps any LLM as a Claude tool. Register with <code>claude mcp add</code>, restart, done.
+      <strong>You're not betting your career on Anthropic remaining the frontier</strong> — Claude Code is the orchestration layer; you swap models behind it as the landscape shifts.
+    </div>
+  </div>
+</body></html>

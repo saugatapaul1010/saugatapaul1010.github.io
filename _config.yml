@@ -1,0 +1,34 @@
+title: "The Top-1% Claude Code Setup — Preview"
+description: "Private local preview"
+author: Saugata Paul
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+permalink: /:title/
+
+theme: minima
+
+exclude:
+  - node_modules
+  - package.json
+  - package-lock.json
+  - pnpm-lock.yaml
+  - yarn.lock
+  - bunfig.toml
+  - render.py
+  - scripts
+  - source
+  - GEMINI_VALIDATION_PROMPT.md
+  - GEMINI_REVALIDATION_PROMPT.md
+  - "top-1-claude-code-setup.md"
+  - "top-1-claude-code-setup.md.bak"
+  - "top-1-claude-code-setup (Copy 2).md"
+  - "top-1-claude-code-setup.backup.md"
+  - README.md
+  - vendor
+  - Gemfile
+  - Gemfile.lock
+
+include:
+  - diagrams

@@ -1,0 +1,68 @@
+flowchart LR
+    %% =====================================================
+    %% Diagram 14 — 5-year retrieval: today's session, 2031's question
+    %% =====================================================
+
+    subgraph TODAY["Today's Session"]
+        SES[Active session<br/>workbook + handovers + decisions]
+        EX([/exit])
+    end
+
+    subgraph STOP["Stop Hook (async)"]
+        HK[session_stop_archive.sh<br/>set -uo pipefail · no -e]
+        IDM{cp -n<br/>idempotent}
+    end
+
+    subgraph PHASE1["Phase-1 Archive (plain files, forever)"]
+        TR[transcript.jsonl<br/>every you/Claude turn]
+        MN[MANIFEST.json<br/>session_id · cwd · timestamp]
+        SM[CLAUDE.md snapshot<br/>rules in effect at archive time]
+        WS[workbooks/ + plans/<br/>snapshots]
+        ST[(~/claude-archive/<br/>YYYY/MM/project/session/)]
+    end
+
+    subgraph SCALE["Scale Decision"]
+        SZ{archive<br/>> 10 GB?}
+        STAY[Stay on grep<br/>recommended for years]
+        BUILD[Build HNSW index<br/>Ruflo embeddings_*]
+    end
+
+    subgraph PHASE2["Phase-2 Overlay (future, when needed)"]
+        EMB[embeddings_generate<br/>incremental nightly]
+        HN[(HNSW vector index<br/>overlay · NOT replacement)]
+    end
+
+    subgraph FUTURE["Future Claude Session (e.g. 2031)"]
+        Q([ask: 'why did we decide X in 2026?'])
+        SR[grep + path heuristics<br/>or embeddings_search]
+        ANS[Exact workbook + handover<br/>file:line + original rationale]
+    end
+
+    SES --> EX --> HK --> IDM
+    IDM --> TR & MN & SM & WS
+    TR & MN & SM & WS --> ST
+
+    ST -.annual review.-> SZ
+    SZ -->|NO| STAY
+    SZ -->|YES| BUILD --> EMB --> HN
+
+    Q --> SR
+    SR -->|grep path| ST
+    SR -.semantic path.-> HN
+    ST --> ANS
+    HN -.-> ANS
+    ANS -->|rationale recovered| Q
+
+    classDef todayCls  fill:#fef3c7,stroke:#854d0e,color:#1f2937;
+    classDef stopCls   fill:#fee2e2,stroke:#991b1b,color:#1f2937;
+    classDef p1Cls     fill:#dcfce7,stroke:#166534,color:#1f2937;
+    classDef scaleCls  fill:#f3f4f6,stroke:#374151,color:#1f2937;
+    classDef p2Cls     fill:#e0e7ff,stroke:#3730a3,color:#1f2937;
+    classDef futCls    fill:#dbeafe,stroke:#1e40af,color:#1f2937;
+
+    class SES,EX todayCls;
+    class HK,IDM stopCls;
+    class TR,MN,SM,WS,ST p1Cls;
+    class SZ,STAY,BUILD scaleCls;
+    class EMB,HN p2Cls;
+    class Q,SR,ANS futCls;

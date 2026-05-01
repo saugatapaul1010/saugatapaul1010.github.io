@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>The Iceberg</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+    background: #0a1929;
+    width: 1400px; min-height: 600px; height: auto;
+    padding: 0;
+    color: #1f2937;
+  }
+  .above-water {
+    background: linear-gradient(180deg, #87ceeb 0%, #b0e0e6 100%);
+    padding: 40px 80px 30px 80px;
+  }
+  .below-water {
+    background: linear-gradient(180deg, #1e3a5f 0%, #0a1929 100%);
+    padding: 30px 80px 40px 80px;
+  }
+  h1 {
+    text-align: center; font-size: 38px; font-weight: 800;
+    color: #0a1929; margin-bottom: 4px;
+    letter-spacing: -0.5px;
+  }
+  .sub {
+    text-align: center; color: #1f2937; font-size: 17px;
+    margin-bottom: 18px; opacity: 0.85;
+  }
+  .above { margin-bottom: 4px; }
+  .label {
+    text-align: center; font-weight: 700; font-size: 14px;
+    text-transform: uppercase; letter-spacing: 2px;
+    margin: 6px 0 12px 0;
+  }
+  .label.above { color: #0a3d62; }
+  .label.below { color: #e0f2fe; padding-top: 14px; margin-bottom: 18px; }
+  .grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px 18px;
+  }
+  .grid.below { grid-template-columns: repeat(4, 1fr); gap: 18px 18px; }
+  .item {
+    background: rgba(255,255,255,0.85);
+    border-radius: 10px; padding: 14px 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    font-size: 14px; line-height: 1.45;
+  }
+  .item.below {
+    background: rgba(15, 30, 50, 0.72);
+    color: #e0f2fe;
+    border: 1px solid rgba(255,255,255,0.18);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    padding: 18px 20px;
+    min-height: 110px;
+  }
+  .item .name { font-weight: 700; font-size: 15.5px; margin-bottom: 6px; color: #0a1929; }
+  .item.below .name { color: #fbbf24; font-size: 15px; }
+  .item .desc { font-size: 12.5px; opacity: 0.92; line-height: 1.5; }
+  .waterline {
+    height: 0;
+    position: relative;
+    border-top: 2px dashed rgba(255,255,255,0.95);
+    margin: 0;
+  }
+  .waterline::after {
+    content: "WATERLINE — what most users see vs. what 1% of users build";
+    position: absolute; top: -11px; left: 50%; transform: translateX(-50%);
+    background: linear-gradient(180deg, #b0e0e6 0%, #b0e0e6 50%, #1e3a5f 50%, #1e3a5f 100%);
+    color: #ffffff; font-weight: 800; letter-spacing: 1.5px;
+    padding: 4px 18px; font-size: 11px;
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  }
+</style></head>
+<body>
+  <div class="above-water">
+    <h1>🧊 The Claude Code Iceberg</h1>
+    <div class="sub">Default install gives you the tip. Top-1% setup is everything below the waterline.</div>
+
+    <div class="label above">Visible by default — what you get out of the box</div>
+    <div class="grid">
+      <div class="item"><div class="name">/help, /clear, /init</div><div class="desc">Built-in slash commands</div></div>
+      <div class="item"><div class="name">CLAUDE.md (basic)</div><div class="desc">Per-project instructions</div></div>
+      <div class="item"><div class="name">Explore / Plan / general-purpose</div><div class="desc">Built-in subagents</div></div>
+      <div class="item"><div class="name">Bash / Edit / Write / Read</div><div class="desc">Standard tools</div></div>
+    </div>
+  </div>
+
+  <div class="waterline"></div>
+
+  <div class="below-water">
+    <div class="label below">Below the waterline — two years of tuning</div>
+  <div class="grid below">
+    <div class="item below"><div class="name">17 deny rules + 4 hooks</div><div class="desc">.env / SSH / curl|bash / fork-bomb safety net</div></div>
+    <div class="item below"><div class="name">223-line statusline</div><div class="desc">Gradient bar · ⏱/⚡ clocks · ♻ cache · 5h/7d quotas</div></div>
+    <div class="item below"><div class="name">Auto-memory system</div><div class="desc">user / feedback / project / reference layers</div></div>
+    <div class="item below"><div class="name">Mission workbooks</div><div class="desc">Episodic memory across multi-turn missions</div></div>
+    <div class="item below"><div class="name">Phase-1 lossless archive</div><div class="desc">~/claude-archive/ — every session, forever</div></div>
+    <div class="item below"><div class="name">6 custom skills</div><div class="desc">project-bootstrap, graphify, drawio-architect, manim-animator, karpathy-guidelines, hft-team</div></div>
+    <div class="item below"><div class="name">10 enabled plugins</div><div class="desc">superpowers, feature-dev, frontend-design, code-review…</div></div>
+    <div class="item below"><div class="name">36 specialist agents</div><div class="desc">12 generic + 24 HFT (apex → chiefs → leads → specialists)</div></div>
+    <div class="item below"><div class="name">5 MCP servers</div><div class="desc">Gemini · GitHub · Context7 · Playwright · Ruflo</div></div>
+    <div class="item below"><div class="name">project-bootstrap skill</div><div class="desc">Three questions → fully-conventioned new project</div></div>
+    <div class="item below"><div class="name">Graphify auto-regen</div><div class="desc">Knowledge graph rebuilt on every .py commit via githooks</div></div>
+    <div class="item below"><div class="name">Portable replication kit</div><div class="desc">65 MB tarball → byte-identical setup on a fresh laptop in 90 min</div></div>
+    </div>
+  </div>
+</body></html>

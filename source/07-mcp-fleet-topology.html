@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>MCP fleet</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+    background:
+      radial-gradient(900px 600px at 50% 50%, rgba(120,160,255,0.10), transparent 70%),
+      linear-gradient(180deg, #0f172a 0%, #020617 100%);
+    width: 1800px; height: 1320px;
+    padding: 40px 60px 24px 60px;
+    color: #e2e8f0;
+    position: relative;
+  }
+  h1 {
+    font-size: 38px; font-weight: 800; letter-spacing: -0.5px;
+    text-align: center; color: #f8fafc; margin-bottom: 4px;
+  }
+  .sub {
+    text-align: center; color: #94a3b8; font-size: 16px;
+    margin-bottom: 30px;
+  }
+
+  /* ────── Center hub ────── */
+  .hub {
+    position: absolute; left: 50%; top: 660px; transform: translate(-50%, -50%);
+    width: 220px; height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #fde68a, #f59e0b 50%, #b45309 100%);
+    box-shadow:
+      0 0 0 8px rgba(251,191,36,0.10),
+      0 0 0 24px rgba(251,191,36,0.06),
+      0 0 60px rgba(251,191,36,0.45);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 10;
+  }
+  .hub .label { font-size: 20px; font-weight: 800; color: #1f2937; }
+  .hub .ver   { font-size: 12px; color: #1f2937; opacity: 0.7; margin-top: 2px; font-family: "SF Mono", Menlo, monospace; }
+  .hub .stat  {
+    font-size: 11px; color: #1f2937; margin-top: 14px;
+    font-family: "SF Mono", Menlo, monospace; font-weight: 700;
+    background: rgba(255,255,255,0.4); padding: 4px 10px; border-radius: 999px;
+  }
+
+  /* ────── 5 primary MCP cards ────── */
+  .mcp {
+    position: absolute; width: 380px;
+    background: rgba(15, 23, 42, 0.85);
+    border-radius: 14px; padding: 18px 20px;
+    border: 1px solid rgba(148,163,184,0.25);
+    box-shadow: 0 6px 28px rgba(0,0,0,0.5);
+    backdrop-filter: blur(6px);
+  }
+  .mcp.featured {
+    border-width: 2px;
+    box-shadow: 0 6px 32px rgba(248, 113, 113, 0.2);
+  }
+  .mcp .header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 10px;
+  }
+  .mcp .badge {
+    width: 38px; height: 38px; border-radius: 10px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  .mcp .name {
+    font-size: 18px; font-weight: 800; letter-spacing: -0.3px;
+    flex: 1;
+  }
+  .mcp .tag {
+    font-size: 10px; font-weight: 800; letter-spacing: 1.5px;
+    padding: 3px 8px; border-radius: 999px;
+    text-transform: uppercase;
+  }
+  .mcp .invocation {
+    font-family: "SF Mono", Menlo, monospace; font-size: 11px;
+    color: #fbbf24; background: rgba(251,191,36,0.08);
+    padding: 4px 8px; border-radius: 4px;
+    margin-bottom: 8px;
+    word-break: break-all;
+  }
+  .mcp .body {
+    font-size: 13px; line-height: 1.55; color: #cbd5e1;
+  }
+  .mcp .body strong { color: #f1f5f9; }
+  .mcp .body em { color: #94a3b8; font-style: italic; }
+  .mcp .why {
+    font-size: 12px; color: #94a3b8;
+    border-top: 1px solid rgba(148,163,184,0.2);
+    padding-top: 8px; margin-top: 8px;
+    font-style: italic;
+  }
+
+  /* Color accents */
+  .mcp.gemini    { border-color: rgba(252, 165, 165, 0.4); }
+  .mcp.gemini    .badge { background: rgba(248,113,113,0.2); }
+  .mcp.gemini    .name  { color: #fca5a5; }
+  .mcp.gemini    .tag   { background: rgba(248,113,113,0.2); color: #fca5a5; }
+
+  .mcp.github    .badge { background: rgba(167,139,250,0.18); }
+  .mcp.github    .name  { color: #c4b5fd; }
+  .mcp.github    .tag   { background: rgba(167,139,250,0.18); color: #c4b5fd; }
+
+  .mcp.context7  .badge { background: rgba(96,165,250,0.18); }
+  .mcp.context7  .name  { color: #93c5fd; }
+  .mcp.context7  .tag   { background: rgba(96,165,250,0.18); color: #93c5fd; }
+
+  .mcp.playwright .badge { background: rgba(74,222,128,0.18); }
+  .mcp.playwright .name  { color: #86efac; }
+  .mcp.playwright .tag   { background: rgba(74,222,128,0.18); color: #86efac; }
+
+  .mcp.ruflo     .badge { background: rgba(244,114,182,0.18); }
+  .mcp.ruflo     .name  { color: #f9a8d4; }
+  .mcp.ruflo     .tag   { background: rgba(244,114,182,0.18); color: #f9a8d4; }
+
+  /* Position the 5 primary cards radially around the hub.
+     Hub centered at ~660px (canvas center: ~660px from top after header).
+     Left col: 3 cards stacked (210, 510, 810). Right col: 2 cards centered around hub (360, 730). */
+  .gemini     { left: 60px;   top: 200px; }
+  .github     { left: 60px;   top: 510px; }
+  .context7   { left: 60px;   top: 820px; }
+  .playwright { right: 60px;  top: 320px; }
+  .ruflo      { right: 60px;  top: 700px; }
+
+  /* Bottom strip — optional/managed MCPs */
+  .optional-strip {
+    position: absolute; left: 60px; right: 60px; bottom: 24px;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px dashed rgba(148,163,184,0.25);
+    border-radius: 12px; padding: 14px 22px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .optional-strip .label {
+    font-size: 11px; font-weight: 800; letter-spacing: 1.5px;
+    text-transform: uppercase; color: #94a3b8;
+    white-space: nowrap;
+  }
+  .optional-strip .items {
+    display: flex; gap: 12px; flex-wrap: wrap; flex: 1;
+  }
+  .optional-strip .item {
+    font-size: 12px; color: #cbd5e1;
+    padding: 5px 12px; border-radius: 6px;
+    background: rgba(148,163,184,0.10);
+    border: 1px solid rgba(148,163,184,0.15);
+    font-family: "SF Mono", Menlo, monospace;
+  }
+  .optional-strip .item .auth {
+    color: #fbbf24; font-size: 10px; margin-left: 6px;
+  }
+
+  /* SVG connectors */
+  svg.connectors {
+    position: absolute; left: 0; top: 0; width: 1800px; height: 1050px;
+    z-index: 1; pointer-events: none;
+  }
+</style></head>
+<body>
+  <h1>MCP fleet — 5 external minds, one socket each</h1>
+  <div class="sub">Claude Code at the center. Each MCP is a deliberate context-window investment. The Gemini server is custom; the others ship via npm.</div>
+
+  <svg class="connectors">
+    <defs>
+      <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="rgba(251,191,36,0.55)"/>
+        <stop offset="100%" stop-color="rgba(148,163,184,0.12)"/>
+      </linearGradient>
+    </defs>
+    <!-- hub center ≈ (900, 750); cards offset slightly inside their rectangles -->
+    <line x1="900" y1="660" x2="440" y2="280"  stroke="url(#line)" stroke-width="2"/>
+    <line x1="900" y1="660" x2="440" y2="590"  stroke="url(#line)" stroke-width="2"/>
+    <line x1="900" y1="660" x2="440" y2="900"  stroke="url(#line)" stroke-width="2"/>
+    <line x1="900" y1="660" x2="1360" y2="400" stroke="url(#line)" stroke-width="2"/>
+    <line x1="900" y1="660" x2="1360" y2="780" stroke="url(#line)" stroke-width="2"/>
+  </svg>
+
+  <div class="hub">
+    <div class="label">Claude Code</div>
+    <div class="ver">v2.1.119</div>
+    <div class="stat">5 MCPs · ✓ all green</div>
+  </div>
+
+  <!-- Gemini: featured (largest investment, custom server) -->
+  <div class="mcp gemini featured">
+    <div class="header">
+      <div class="badge">💎</div>
+      <div class="name">Gemini</div>
+      <div class="tag">CUSTOM · 423 lines</div>
+    </div>
+    <div class="invocation">~/.claude/mcp-servers/gemini/server.py</div>
+    <div class="body">
+      <strong>The second-opinion oracle.</strong> Hard-pinned to <code>gemini-3.1-pro-preview</code>. <code>thinking_budget=-1</code> always on. No fallback on 429 — wait for quota, don't accept lesser output.
+    </div>
+    <div class="why">→ Adversarial review of drafted plans · 1M-token context for full-subsystem audits · model-diverse sanity check on non-trivial claims.</div>
+  </div>
+
+  <!-- GitHub -->
+  <div class="mcp github">
+    <div class="header">
+      <div class="badge">🐙</div>
+      <div class="name">GitHub</div>
+      <div class="tag">NPX</div>
+    </div>
+    <div class="invocation">npx -y @modelcontextprotocol/server-github</div>
+    <div class="body">
+      <strong>Non-CLI flows.</strong> The <code>gh</code> CLI handles 90% of GitHub work; this MCP earns its keep on the other 10% — multi-step PR triage, complex issue filters, structured comments + reviews in one round trip.
+    </div>
+  </div>
+
+  <!-- Context7 -->
+  <div class="mcp context7">
+    <div class="header">
+      <div class="badge">📚</div>
+      <div class="name">Context7</div>
+      <div class="tag">NPX</div>
+    </div>
+    <div class="invocation">npx -y @upstash/context7-mcp</div>
+    <div class="body">
+      <strong>Live library docs.</strong> Beats the training-data cutoff. When you ask about Next.js 15 features and Claude was trained on Next.js 14, you'd get plausible-but-wrong code without this.
+    </div>
+  </div>
+
+  <!-- Playwright -->
+  <div class="mcp playwright">
+    <div class="header">
+      <div class="badge">🎭</div>
+      <div class="name">Playwright</div>
+      <div class="tag">NPX</div>
+    </div>
+    <div class="invocation">npx -y @playwright/mcp</div>
+    <div class="body">
+      <strong>Headless browser.</strong> E2E tests, scraping, screenshots, anything needing a real DOM. The HTML mockups in this very blog post were rendered through it.
+    </div>
+  </div>
+
+  <!-- Ruflo -->
+  <div class="mcp ruflo">
+    <div class="header">
+      <div class="badge">🧠</div>
+      <div class="name">Ruflo</div>
+      <div class="tag">CURATED</div>
+    </div>
+    <div class="invocation">ruflo mcp start</div>
+    <div class="body">
+      <strong>Persistent memory + HNSW embeddings.</strong> Curated subset only — <code>memory_*</code>, <code>agentdb_*</code>, <code>embeddings_*</code>. The Phase-2 backbone: when <code>~/claude-archive/</code> outgrows <code>grep</code>, embeddings layer goes on top without replacing the files.
+    </div>
+    <div class="why">⚠ Everything else in Ruflo (swarm, hive-mind, neural training, hooks-of-its-own) is denylisted — duplicates Claude Code's primitives or experimental.</div>
+  </div>
+
+  <!-- Optional / managed MCPs strip -->
+  <div class="optional-strip">
+    <div class="label">Also visible<br>(claude.ai-managed)</div>
+    <div class="items">
+      <div class="item">Excalidraw <span class="auth">✓</span></div>
+      <div class="item">Google Drive <span class="auth">! auth</span></div>
+      <div class="item">Gmail <span class="auth">! auth</span></div>
+      <div class="item">Google Calendar <span class="auth">! auth</span></div>
+      <div class="item">Figma <span class="auth">! auth</span></div>
+    </div>
+  </div>
+</body></html>

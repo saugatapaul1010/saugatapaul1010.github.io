@@ -1,0 +1,70 @@
+graph TB
+    classDef core fill:#fef3c7,stroke:#f59e0b,stroke-width:3px,color:#1f2937
+    classDef safety fill:#fee2e2,stroke:#dc2626,color:#1f2937
+    classDef mem fill:#dbeafe,stroke:#3b82f6,color:#1f2937
+    classDef agent fill:#dcfce7,stroke:#16a34a,color:#1f2937
+    classDef skill fill:#e0e7ff,stroke:#6366f1,color:#1f2937
+    classDef mcp fill:#fce7f3,stroke:#db2777,color:#1f2937
+    classDef ui fill:#f3e8ff,stroke:#9333ea,color:#1f2937
+    classDef arc fill:#e5e7eb,stroke:#6b7280,color:#1f2937
+
+    CC[["Claude Code v2.1.119<br/>(your terminal)"]]:::core
+
+    subgraph Safety["🛡️ Safety net"]
+        DENY["settings.json<br/>17 deny rules<br/>(.env, *.pem, .ssh/...)"]:::safety
+        H1["pre_tool_use.sh<br/>Bash + Edit guard"]:::safety
+    end
+
+    subgraph Memory["🧠 Memory ladder"]
+        CMD["CLAUDE.md<br/>(global / project / personal)"]:::mem
+        AM["~/.claude/projects/&lt;slug&gt;/<br/>memory/MEMORY.md"]:::mem
+        WB["repo/.claude/workbooks/<br/>YYYY-MM-DD-*.md"]:::mem
+        ARC["~/claude-archive/<br/>YYYY/MM/&lt;project&gt;/&lt;session&gt;/"]:::arc
+    end
+
+    subgraph Skills["⚙️ Skills (verbs)"]
+        SK1["project-bootstrap"]:::skill
+        SK2["graphify"]:::skill
+        SK3["drawio-architect"]:::skill
+        SK4["manim-animator"]:::skill
+        SK5["karpathy-guidelines"]:::skill
+        SP["superpowers (12 sub-skills)<br/>brainstorm · plan · TDD · debug · review"]:::skill
+    end
+
+    subgraph Agents["🤖 Agents (specialists)"]
+        GA["12 generic<br/>backend, frontend, devops,<br/>security, test-writer,<br/>code-reviewer, ai-engineer,<br/>scientific-blogger,<br/>config-compliance-enforcer..."]:::agent
+        HFT["24 hft-team<br/>apex → chiefs → leads<br/>→ specialists<br/>(case study)"]:::agent
+        BUILT["Built-ins<br/>Explore · Plan · general-purpose"]:::agent
+    end
+
+    subgraph MCPs["🔌 MCP servers"]
+        M1["Gemini<br/>3.1-pro-preview"]:::mcp
+        M2["GitHub"]:::mcp
+        M3["Context7"]:::mcp
+        M4["Playwright"]:::mcp
+        M5["Ruflo"]:::mcp
+    end
+
+    subgraph UI["🎨 UI layer"]
+        SL["statusline.sh<br/>15-cell gradient bar<br/>⏱/⚡ dual clocks · ♻ cache hit"]:::ui
+        OS["explanatory-output-style<br/>plugin"]:::ui
+    end
+
+    subgraph Hooks["🪝 Hooks"]
+        H2["session_start.sh"]:::safety
+        H3["user_prompt_submit.sh"]:::safety
+        H4["session_stop_archive.sh<br/>(async, lossless)"]:::safety
+    end
+
+    CC --- Safety
+    CC --- Memory
+    CC --- Skills
+    CC --- Agents
+    CC --- MCPs
+    CC --- UI
+    CC --- Hooks
+
+    H4 -.archives to.-> ARC
+    SK1 -.scaffolds.-> CMD
+    SK1 -.scaffolds.-> WB
+    SP -.uses.-> Agents

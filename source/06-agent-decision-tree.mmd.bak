@@ -1,0 +1,33 @@
+flowchart TD
+    classDef q fill:#fef3c7,stroke:#f59e0b,color:#1f2937
+    classDef direct fill:#dcfce7,stroke:#16a34a,color:#1f2937
+    classDef apex fill:#dbeafe,stroke:#3b82f6,color:#1f2937
+    classDef parallel fill:#fce7f3,stroke:#db2777,color:#1f2937
+    classDef builtin fill:#e5e7eb,stroke:#6b7280,color:#1f2937
+
+    Start["You have a task"]:::q
+    Q1{"Touches ≥2<br/>independent files<br/>or domains?"}:::q
+    Q2{"Single specialist<br/>can answer it?"}:::q
+    Q3{"Need broad<br/>codebase recon?"}:::q
+    Q4{"Sub-tasks are<br/>independent of<br/>each other?"}:::q
+
+    Direct["Call the specialist<br/><sub>backend-specialist /<br/>frontend-specialist /<br/>devops-specialist /<br/>config-compliance-enforcer</sub>"]:::direct
+
+    Apex["Dispatch via apex<br/><sub>hft-cto for HFT,<br/>or you orchestrate<br/>chiefs → leads → specialists</sub>"]:::apex
+
+    Explore["Use Explore agent<br/><sub>read-only, fast, multiple<br/>queries in parallel</sub>"]:::builtin
+
+    Parallel["Fan out — N agents<br/>in ONE message<br/><sub>each independent task<br/>runs concurrently</sub>"]:::parallel
+
+    Built["Built-ins:<br/>Plan / Explore / general-purpose"]:::builtin
+
+    Start --> Q3
+    Q3 -->|yes| Explore
+    Q3 -->|no| Q1
+    Q1 -->|no| Q2
+    Q1 -->|yes| Q4
+    Q2 -->|yes| Direct
+    Q2 -->|no| Apex
+    Q4 -->|yes| Parallel
+    Q4 -->|no| Apex
+    Apex --> Built

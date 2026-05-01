@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Skill invocation flow</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+    background:
+      radial-gradient(900px 600px at 50% 30%, rgba(167,139,250,0.10), transparent 70%),
+      linear-gradient(180deg, #0f172a 0%, #020617 100%);
+    width: 1800px; min-height: 800px; height: auto;
+    padding: 40px 60px 60px 60px;
+    color: #e2e8f0;
+    position: relative;
+  }
+  h1 {
+    font-size: 38px; font-weight: 800; letter-spacing: -0.5px;
+    text-align: center; color: #f8fafc; margin-bottom: 4px;
+  }
+  .sub {
+    text-align: center; color: #94a3b8; font-size: 16px;
+    margin-bottom: 36px;
+  }
+
+  /* ────────── Stage 1: User trigger ────────── */
+  .user-row {
+    display: flex; justify-content: center; gap: 24px;
+    margin-bottom: 30px;
+  }
+  .trigger {
+    flex: 0 0 380px;
+    background: rgba(15, 23, 42, 0.85);
+    border: 2px solid rgba(96,165,250,0.4);
+    border-radius: 14px; padding: 18px 22px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+  }
+  .trigger .label {
+    font-size: 11px; font-weight: 800; letter-spacing: 2px;
+    color: #93c5fd; text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .trigger .quote {
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 14px; color: #e2e8f0;
+    line-height: 1.5;
+  }
+  .trigger .quote .hi { color: #93c5fd; }
+
+  /* ────────── Stage 2: Router ────────── */
+  .router {
+    margin: 0 auto 30px auto;
+    max-width: 880px;
+    background: rgba(251, 191, 36, 0.08);
+    border: 2px solid rgba(251,191,36,0.4);
+    border-radius: 14px; padding: 20px 26px;
+    text-align: center;
+    box-shadow: 0 6px 24px rgba(251,191,36,0.10);
+  }
+  .router .icon { font-size: 24px; margin-right: 8px; }
+  .router .name {
+    font-size: 20px; font-weight: 800; color: #fde68a;
+    letter-spacing: -0.3px;
+  }
+  .router .what {
+    margin-top: 6px; font-size: 13px; color: #cbd5e1;
+    font-style: italic;
+  }
+  .arrow-down {
+    text-align: center; font-size: 28px; color: #fbbf24;
+    margin: 6px 0; opacity: 0.7;
+  }
+
+  /* ────────── Stage 3: Two paths converging ────────── */
+  .paths {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+    max-width: 1100px; margin: 0 auto 24px auto;
+  }
+  .path {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(148,163,184,0.25);
+    border-radius: 14px; padding: 16px 20px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+  }
+  .path .badge {
+    display: inline-block;
+    font-size: 10px; font-weight: 800; letter-spacing: 1.5px;
+    padding: 3px 9px; border-radius: 999px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .path.auto .badge { background: rgba(96,165,250,0.18); color: #93c5fd; }
+  .path.manual .badge { background: rgba(167,139,250,0.18); color: #c4b5fd; }
+  .path .title { font-size: 16px; font-weight: 800; color: #f1f5f9; margin-bottom: 6px; }
+  .path .desc { font-size: 13px; color: #cbd5e1; line-height: 1.5; }
+
+  /* ────────── Stage 4: Loader (single) ────────── */
+  .loader {
+    margin: 0 auto 30px auto; max-width: 700px;
+    background: rgba(74, 222, 128, 0.08);
+    border: 2px solid rgba(74, 222, 128, 0.4);
+    border-radius: 14px; padding: 18px 26px;
+    text-align: center;
+    box-shadow: 0 6px 24px rgba(74,222,128,0.10);
+  }
+  .loader .name {
+    font-size: 18px; font-weight: 800; color: #86efac;
+  }
+  .loader .desc {
+    margin-top: 4px; font-size: 13px; color: #cbd5e1;
+  }
+  .loader code {
+    font-family: "SF Mono", Menlo, monospace;
+    background: rgba(74,222,128,0.12); padding: 2px 6px;
+    border-radius: 4px; color: #86efac;
+  }
+
+  /* ────────── Stage 5: Skills shelf ────────── */
+  .shelf {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px;
+    margin-bottom: 30px;
+  }
+  .skill {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(167,139,250,0.3);
+    border-radius: 12px; padding: 14px 14px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    border-top: 3px solid #a78bfa;
+    text-align: center;
+  }
+  .skill .icon { font-size: 26px; display: block; margin-bottom: 6px; }
+  .skill .name {
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 13px; font-weight: 700; color: #c4b5fd;
+    margin-bottom: 4px;
+  }
+  .skill .what {
+    font-size: 11.5px; color: #cbd5e1; line-height: 1.4;
+  }
+
+  /* ────────── Stage 6: Execution + verification + output ────────── */
+  .pipeline {
+    display: grid; grid-template-columns: 1fr 60px 1fr 60px 1fr; gap: 0;
+    align-items: center;
+    max-width: 1500px; margin: 0 auto;
+  }
+  .stage {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(148,163,184,0.25);
+    border-radius: 12px; padding: 16px 18px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+    text-align: center;
+  }
+  .stage.exec   { border-top: 3px solid #fbbf24; }
+  .stage.verify { border-top: 3px solid #86efac; }
+  .stage.output { border-top: 3px solid #f9a8d4; }
+  .stage .icon { font-size: 26px; display: block; margin-bottom: 6px; }
+  .stage .label {
+    font-size: 11px; font-weight: 800; letter-spacing: 1.5px;
+    text-transform: uppercase; margin-bottom: 4px;
+  }
+  .stage.exec   .label { color: #fde68a; }
+  .stage.verify .label { color: #86efac; }
+  .stage.output .label { color: #f9a8d4; }
+  .stage .body { font-size: 12.5px; color: #cbd5e1; line-height: 1.5; }
+  .stage .body code {
+    font-family: "SF Mono", Menlo, monospace; font-size: 11px;
+    background: rgba(148,163,184,0.12); padding: 1px 5px; border-radius: 3px;
+    color: #e2e8f0;
+  }
+  .arrow-right {
+    text-align: center; font-size: 32px; color: #94a3b8; opacity: 0.7;
+  }
+</style></head>
+<body>
+  <h1>How a skill gets invoked</h1>
+  <div class="sub">Two entry paths · one router · one loader · five-skill shelf · same execution backbone — every time.</div>
+
+  <!-- Stage 1: trigger -->
+  <div class="user-row">
+    <div class="trigger">
+      <div class="label">You type</div>
+      <div class="quote">"<span class="hi">bootstrap this project</span>"<br>or<br><span class="hi">/project-bootstrap</span></div>
+    </div>
+  </div>
+
+  <div class="arrow-down">↓</div>
+
+  <!-- Stage 2: Router -->
+  <div class="router">
+    <div><span class="icon">🎯</span><span class="name">Claude Code matches against skill descriptions</span></div>
+    <div class="what">Scans every installed skill's <code style="font-family:'SF Mono',Menlo,monospace; background:rgba(251,191,36,0.15); padding:1px 5px; border-radius:3px; color:#fde68a;">description:</code> field — picks the best match by intent.</div>
+  </div>
+
+  <div class="arrow-down">↓</div>
+
+  <!-- Stage 3: Two convergent paths -->
+  <div class="paths">
+    <div class="path auto">
+      <div class="badge">PATH A · automatic</div>
+      <div class="title">Description match</div>
+      <div class="desc">model-invocable skills auto-load when your prompt matches their description.</div>
+    </div>
+    <div class="path manual">
+      <div class="badge">PATH B · explicit</div>
+      <div class="title">Slash command</div>
+      <div class="desc">User-invocable skills load directly via <code style="font-family:'SF Mono',Menlo,monospace; background:rgba(167,139,250,0.18); padding:1px 5px; border-radius:3px; color:#c4b5fd;">/&lt;skill-name&gt;</code> — no router gate.</div>
+    </div>
+  </div>
+
+  <div class="arrow-down">↓</div>
+
+  <!-- Stage 4: Loader -->
+  <div class="loader">
+    <div class="name">Skill tool loads <code>SKILL.md</code> into context</div>
+    <div class="desc">Both paths land here. The skill's body becomes part of Claude's working prompt for the rest of this turn.</div>
+  </div>
+
+  <div class="arrow-down">↓</div>
+
+  <!-- Stage 5: Shelf -->
+  <div class="shelf">
+    <div class="skill">
+      <span class="icon">🏗️</span>
+      <div class="name">project-bootstrap</div>
+      <div class="what">3 questions →<br>scaffolds CLAUDE.md, hooks, docs, templates</div>
+    </div>
+    <div class="skill">
+      <span class="icon">🕸️</span>
+      <div class="name">graphify</div>
+      <div class="what">code → knowledge graph<br>+ HTML viz + audit report</div>
+    </div>
+    <div class="skill">
+      <span class="icon">📐</span>
+      <div class="name">drawio-architect</div>
+      <div class="what">spec → .drawio diagram<br>+ pixel-level vision audit</div>
+    </div>
+    <div class="skill">
+      <span class="icon">🎬</span>
+      <div class="name">manim-animator</div>
+      <div class="what">prompt → 3B1B-style<br>math animation</div>
+    </div>
+    <div class="skill">
+      <span class="icon">⭐</span>
+      <div class="name">superpowers/* (12)</div>
+      <div class="what">brainstorm · plan · TDD<br>· debug · review · git-worktrees</div>
+    </div>
+  </div>
+
+  <div class="arrow-down">↓</div>
+
+  <!-- Stage 6: Execution → verification → output -->
+  <div class="pipeline">
+    <div class="stage exec">
+      <span class="icon">⚙️</span>
+      <div class="label">Execute</div>
+      <div class="body">Skill runs per its declared <code>allowed-tools</code> (Read, Write, Bash, Glob, Grep …)</div>
+    </div>
+    <div class="arrow-right">→</div>
+    <div class="stage verify">
+      <span class="icon">✅</span>
+      <div class="label">Verify</div>
+      <div class="body">Skill's own verification block runs — JSON validity, file presence, test gates.</div>
+    </div>
+    <div class="arrow-right">→</div>
+    <div class="stage output">
+      <span class="icon">📦</span>
+      <div class="label">Output</div>
+      <div class="body">Files · diagrams · plans land on disk. <code>git status</code> shows the work.</div>
+    </div>
+  </div>
+</body></html>

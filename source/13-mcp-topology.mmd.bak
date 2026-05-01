@@ -1,0 +1,50 @@
+flowchart LR
+    %% =====================================================
+    %% Diagram 13 — MCP fleet, today and tomorrow
+    %% =====================================================
+
+    subgraph CORE["Claude Code Core"]
+        CC[Claude Code<br/>MCP client]
+        RT[Tool Router<br/>JSON-RPC over stdio]
+    end
+
+    subgraph PROD["Production MCPs (5)"]
+        GEM["gemini<br/>custom Python · 423 LOC<br/>thinking always on"]
+        GH["github<br/>official MCP server"]
+        C7["context7<br/>current library docs"]
+        PW["playwright<br/>browser automation"]
+        RUF["ruflo curated<br/>memory · agentdb · embeddings"]
+    end
+
+    subgraph EXT["Extension Slots — same pattern, any LLM"]
+        LLA["llama via Ollama<br/>local · sovereign · offline"]
+        GPT["gpt OpenAI<br/>frontier alternative"]
+        MIS["mistral or deepseek<br/>any API-reachable model"]
+        DBX[("your-db-mcp<br/>any internal system")]
+    end
+
+    GAPI([Google AI])
+    OLM([Ollama localhost])
+    OAI([OpenAI API])
+    GHA([GitHub API])
+    UPS([Upstash Docs])
+
+    CC -->|calls tool| RT
+    RT -->|stdio| GEM & GH & C7 & PW & RUF
+    RT -.stdio · 20-line server.-> LLA & GPT & MIS & DBX
+
+    GEM -->|API| GAPI
+    GH -->|REST| GHA
+    C7 -->|fetch| UPS
+    LLA -.local HTTP.-> OLM
+    GPT -.API.-> OAI
+
+    classDef coreCls fill:#fef3c7,stroke:#1f2937,stroke-width:2px,color:#1f2937;
+    classDef prodCls fill:#dcfce7,stroke:#166534,color:#1f2937;
+    classDef extCls  fill:#e0e7ff,stroke:#3730a3,color:#1f2937,stroke-dasharray: 4 2;
+    classDef apiCls  fill:#f3f4f6,stroke:#374151,color:#1f2937;
+
+    class CC,RT coreCls;
+    class GEM,GH,C7,PW,RUF prodCls;
+    class LLA,GPT,MIS,DBX extCls;
+    class GAPI,OLM,OAI,GHA,UPS apiCls;

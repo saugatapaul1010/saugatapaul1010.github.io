@@ -1,0 +1,39 @@
+graph LR
+    classDef cc fill:#fef3c7,stroke:#f59e0b,stroke-width:3px,color:#1f2937
+    classDef llm fill:#dbeafe,stroke:#3b82f6,color:#1f2937
+    classDef tool fill:#dcfce7,stroke:#16a34a,color:#1f2937
+    classDef data fill:#fce7f3,stroke:#db2777,color:#1f2937
+    classDef other fill:#e5e7eb,stroke:#6b7280,color:#1f2937
+
+    CC[["Claude Code<br/>v2.1.119"]]:::cc
+
+    G["Gemini MCP<br/><sub>custom Python server<br/>3.1-pro-preview only<br/>thinking=on, no fallback</sub>"]:::llm
+
+    GH["GitHub MCP<br/><sub>npx server-github<br/>PRs, issues, search</sub>"]:::data
+    C7["Context7 MCP<br/><sub>npx context7-mcp<br/>live library docs</sub>"]:::data
+    PW["Playwright MCP<br/><sub>npx @playwright/mcp<br/>browser automation</sub>"]:::tool
+    RU["Ruflo MCP<br/><sub>ruflo mcp start<br/>memory + embeddings</sub>"]:::tool
+
+    EX["Excalidraw"]:::other
+    GD["Google Drive"]:::other
+    GM["Gmail"]:::other
+    GC["Google Calendar"]:::other
+    FG["Figma"]:::other
+
+    CC <--> G
+    CC <--> GH
+    CC <--> C7
+    CC <--> PW
+    CC <--> RU
+
+    CC -.optional.- EX
+    CC -.optional.- GD
+    CC -.optional.- GM
+    CC -.optional.- GC
+    CC -.optional.- FG
+
+    G -->|"deep-thinking<br/>second opinion"| OUT1["1M-token context<br/>adversarial review"]
+    GH -->|"non-CLI flows"| OUT2["PR mgmt, issue tracking"]
+    C7 -->|"current docs"| OUT3["beats stale training data"]
+    PW -->|"headless browser"| OUT4["E2E, scraping, screenshots"]
+    RU -->|"persistent memory"| OUT5["embeddings, agentdb"]

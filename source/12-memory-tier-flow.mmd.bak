@@ -1,0 +1,77 @@
+flowchart TB
+    %% =====================================================
+    %% Diagram 12 — Memory Architecture: what loads when
+    %% =====================================================
+
+    LAUNCH([claude launch])
+    PROMPT([user prompt])
+    EXIT([/exit])
+
+    subgraph HOT["Hot Tier — always loaded on session start"]
+        direction LR
+        GMD[~/.claude/CLAUDE.md<br/>global rules]
+        PMD[<repo>/CLAUDE.md<br/>project rules]
+        LMD[<repo>/CLAUDE.local.md<br/>gitignored personal]
+        IDX[MEMORY.md<br/>auto-memory index]
+    end
+
+    subgraph WARM["Warm Tier — loaded on relevance match"]
+        direction LR
+        TOP[feedback_* · project_*<br/>user_* · reference_*]
+        WB[.claude/workbooks/<br/>YYYY-MM-DD-slug.md]
+        PLN[~/.claude/plans/<br/>plan-mode artifacts]
+    end
+
+    subgraph SESSION["Active Session Window"]
+        CTX[Context window<br/>Claude reasons here]
+        AG[Dispatched agents<br/>read same memory]
+    end
+
+    subgraph COLD["Cold Tier — Stop hook archives"]
+        STOP[session_stop_archive.sh<br/>89 lines · async · idempotent]
+        ARC[(~/claude-archive/<br/>YYYY/MM/project/session/)]
+        MAN[MANIFEST.json<br/>+ transcript.jsonl<br/>+ workbooks + plans]
+    end
+
+    subgraph FUTURE["5-year retrieval surface"]
+        GREP[grep -r<br/>works in 2031]
+        HNSW[Phase 2: HNSW index<br/>embeddings overlay when >10GB]
+        ASK([future Claude<br/>asks 'why X?'])
+    end
+
+    LAUNCH --> GMD & PMD & LMD & IDX
+    GMD & PMD & LMD & IDX --> CTX
+
+    PROMPT -->|description match| TOP
+    PROMPT -->|date/tag match| WB
+    PROMPT -.if resuming.-> PLN
+    TOP & WB --> CTX
+    PLN -.-> CTX
+
+    CTX -->|dispatch| AG
+    AG -->|append handover| WB
+    AG -.save feedback.-> TOP
+
+    EXIT --> STOP
+    STOP --> ARC
+    ARC --> MAN
+
+    ASK --> GREP
+    ASK -.after >10GB.-> HNSW
+    GREP --> MAN
+    HNSW -.-> MAN
+    MAN -->|exact rationale recovered| ASK
+
+    classDef trigCls   fill:#f3f4f6,stroke:#1f2937,color:#1f2937;
+    classDef hotCls    fill:#fee2e2,stroke:#991b1b,color:#1f2937;
+    classDef warmCls   fill:#fef3c7,stroke:#854d0e,color:#1f2937;
+    classDef sessCls   fill:#dbeafe,stroke:#1e40af,color:#1f2937;
+    classDef coldCls   fill:#dcfce7,stroke:#166534,color:#1f2937;
+    classDef futCls    fill:#e0e7ff,stroke:#3730a3,color:#1f2937;
+
+    class LAUNCH,PROMPT,EXIT,ASK trigCls;
+    class GMD,PMD,LMD,IDX hotCls;
+    class TOP,WB,PLN warmCls;
+    class CTX,AG sessCls;
+    class STOP,ARC,MAN coldCls;
+    class GREP,HNSW futCls;

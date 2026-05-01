@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Agent decision tree</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+    background:
+      radial-gradient(800px 500px at 50% 18%, rgba(74,222,128,0.10), transparent 70%),
+      linear-gradient(180deg, #0f172a 0%, #020617 100%);
+    width: 1800px; min-height: 800px; height: auto;
+    padding: 40px 60px 60px 60px;
+    color: #e2e8f0;
+    position: relative;
+  }
+  h1 {
+    font-size: 38px; font-weight: 800; letter-spacing: -0.5px;
+    text-align: center; color: #f8fafc; margin-bottom: 4px;
+  }
+  .sub {
+    text-align: center; color: #94a3b8; font-size: 16px;
+    margin-bottom: 36px;
+  }
+
+  /* ─── Root ─── */
+  .root {
+    margin: 0 auto 18px auto; max-width: 480px;
+    background: rgba(96,165,250,0.10);
+    border: 2px solid rgba(96,165,250,0.4);
+    border-radius: 14px; padding: 18px 24px;
+    text-align: center;
+    box-shadow: 0 6px 24px rgba(96,165,250,0.10);
+  }
+  .root .label {
+    font-size: 11px; font-weight: 800; letter-spacing: 2px;
+    color: #93c5fd; text-transform: uppercase; margin-bottom: 6px;
+  }
+  .root .what { font-size: 18px; font-weight: 800; color: #f1f5f9; }
+
+  /* ─── Decision diamond ─── */
+  .question {
+    margin: 0 auto;
+    max-width: 760px;
+    background: rgba(251, 191, 36, 0.10);
+    border: 2px solid rgba(251,191,36,0.45);
+    border-radius: 16px;
+    padding: 18px 26px;
+    text-align: center;
+    box-shadow: 0 4px 18px rgba(251,191,36,0.10);
+    position: relative;
+  }
+  .question .q-label {
+    font-size: 10px; font-weight: 800; letter-spacing: 2px;
+    color: #fbbf24; text-transform: uppercase; margin-bottom: 4px;
+  }
+  .question .q-text {
+    font-size: 17px; font-weight: 700; color: #fde68a; line-height: 1.3;
+  }
+  .question .q-text .accent { color: #fff; }
+
+  /* ─── Branch labels (yes/no) ─── */
+  .branch-row {
+    display: flex; justify-content: center; align-items: center;
+    margin: 8px 0; gap: 200px; height: 22px;
+  }
+  .branch {
+    font-size: 13px; font-weight: 700;
+    padding: 4px 12px; border-radius: 999px;
+    text-transform: lowercase;
+  }
+  .branch.yes { background: rgba(74,222,128,0.18); color: #86efac; border: 1px solid rgba(74,222,128,0.4); }
+  .branch.no  { background: rgba(248,113,113,0.18); color: #fca5a5; border: 1px solid rgba(248,113,113,0.4); }
+
+  /* ─── Outcome cards ─── */
+  .outcome {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(148,163,184,0.3);
+    border-radius: 14px;
+    padding: 18px 22px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+    border-top: 4px solid;
+  }
+  .outcome .badge {
+    display: inline-block;
+    font-size: 10px; font-weight: 800; letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 3px 9px; border-radius: 999px;
+    margin-bottom: 10px;
+  }
+  .outcome .name { font-size: 18px; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.3px; }
+  .outcome .body { font-size: 13px; color: #cbd5e1; line-height: 1.5; }
+  .outcome .body code {
+    font-family: "SF Mono", Menlo, monospace; font-size: 11.5px;
+    background: rgba(148,163,184,0.12); padding: 1px 5px; border-radius: 3px;
+    color: #e2e8f0;
+  }
+  .outcome .body strong { color: #f1f5f9; }
+
+  /* Color variants */
+  .outcome.explore  { border-top-color: #94a3b8; }
+  .outcome.explore  .badge { background: rgba(148,163,184,0.18); color: #cbd5e1; }
+  .outcome.explore  .name  { color: #cbd5e1; }
+
+  .outcome.direct   { border-top-color: #86efac; }
+  .outcome.direct   .badge { background: rgba(74,222,128,0.18); color: #86efac; }
+  .outcome.direct   .name  { color: #86efac; }
+
+  .outcome.parallel { border-top-color: #f9a8d4; }
+  .outcome.parallel .badge { background: rgba(244,114,182,0.18); color: #f9a8d4; }
+  .outcome.parallel .name  { color: #f9a8d4; }
+
+  .outcome.apex     { border-top-color: #c4b5fd; }
+  .outcome.apex     .badge { background: rgba(167,139,250,0.18); color: #c4b5fd; }
+  .outcome.apex     .name  { color: #c4b5fd; }
+
+  /* Stage layout */
+  .stage-row { display: grid; gap: 24px; margin-bottom: 18px; }
+  .stage-row.split-2 { grid-template-columns: 1fr 1fr; }
+  .stage-row.split-1 { grid-template-columns: 1fr; max-width: 700px; margin-left:auto; margin-right:auto; }
+
+  .arrow-down {
+    text-align: center; font-size: 26px; color: #94a3b8;
+    opacity: 0.6; margin: 8px 0;
+  }
+  .arrow-fork {
+    display: grid; grid-template-columns: 1fr 1fr;
+    text-align: center; font-size: 26px; color: #94a3b8; opacity: 0.6;
+    margin: 6px 0;
+  }
+
+  /* SVG layer for branching guide lines */
+  svg.branch-lines {
+    position: absolute; left: 0; top: 0;
+    width: 1800px; height: 1700px;
+    z-index: 0; pointer-events: none;
+  }
+
+  /* Bottom rule-of-thumb strip */
+  .rules {
+    margin-top: 22px;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px dashed rgba(148,163,184,0.3);
+    border-radius: 12px; padding: 16px 24px;
+    display: flex; gap: 28px; align-items: flex-start;
+  }
+  .rules .label {
+    font-size: 11px; font-weight: 800; letter-spacing: 1.5px;
+    text-transform: uppercase; color: #94a3b8;
+    white-space: nowrap; flex: 0 0 110px; padding-top: 2px;
+  }
+  .rules .items { font-size: 13px; color: #cbd5e1; line-height: 1.6; }
+  .rules .items strong { color: #f1f5f9; }
+</style></head>
+<body>
+  <h1>Which agent should I dispatch?</h1>
+  <div class="sub">Three questions → four outcomes. The default is "call the specialist directly"; the others kick in for survey, parallelism, or cross-domain work.</div>
+
+  <!-- Root -->
+  <div class="root">
+    <div class="label">YOU HAVE A TASK</div>
+    <div class="what">Where does it go?</div>
+  </div>
+
+  <div class="arrow-down">↓</div>
+
+  <!-- Q1 -->
+  <div class="question">
+    <div class="q-label">Question 1</div>
+    <div class="q-text">Need <span class="accent">broad codebase recon</span> before you can act?</div>
+  </div>
+  <div class="branch-row">
+    <div class="branch no">↙ no</div>
+    <div class="branch yes">yes ↘</div>
+  </div>
+
+  <div class="stage-row split-2">
+    <!-- Q2 (the no branch — most common) -->
+    <div class="question" style="max-width:none">
+      <div class="q-label">Question 2</div>
+      <div class="q-text">Touches <span class="accent">≥2 independent files or domains</span>?</div>
+    </div>
+
+    <!-- Outcome: Explore agent -->
+    <div class="outcome explore">
+      <div class="badge">Outcome A</div>
+      <div class="name">🔍 Use Explore agent</div>
+      <div class="body">
+        <strong>Read-only · fast · multiple queries in parallel.</strong> Spawn 3 in one message for a survey of unknown territory. Ideal for "how does this codebase handle X?" questions before any edit.
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-fork"><span>↙ no</span><span>yes ↘</span></div>
+
+  <div class="stage-row split-2">
+    <!-- Q3a — single specialist -->
+    <div class="question" style="max-width:none">
+      <div class="q-label">Question 3a</div>
+      <div class="q-text"><span class="accent">A single specialist</span> can answer it?</div>
+    </div>
+    <!-- Q3b — sub-tasks independent -->
+    <div class="question" style="max-width:none">
+      <div class="q-label">Question 3b</div>
+      <div class="q-text">Sub-tasks <span class="accent">independent of each other</span>?</div>
+    </div>
+  </div>
+
+  <div class="arrow-fork"><span>↙ yes ↘ no</span><span>↙ yes ↘ no</span></div>
+
+  <div class="stage-row" style="grid-template-columns: 1fr 1fr 1fr; gap:18px;">
+    <!-- Outcome: direct call -->
+    <div class="outcome direct">
+      <div class="badge">Outcome B · default</div>
+      <div class="name">🎯 Call the specialist</div>
+      <div class="body">
+        Direct dispatch. Pick the right one by description match — <code>backend-specialist</code>, <code>frontend-specialist</code>, <code>devops-specialist</code>, <code>security-auditor-generic</code>, <code>config-compliance-enforcer</code>, etc.
+        <br><strong>Most tasks land here.</strong>
+      </div>
+    </div>
+
+    <!-- Outcome: parallel fan-out -->
+    <div class="outcome parallel">
+      <div class="badge">Outcome C</div>
+      <div class="name">⚡ Fan out — N agents in ONE message</div>
+      <div class="body">
+        Each independent task runs concurrently. Critical: dispatch <strong>in a single message</strong> — separate messages run sequentially. Save N × wall-clock cost.
+      </div>
+    </div>
+
+    <!-- Outcome: apex -->
+    <div class="outcome apex">
+      <div class="badge">Outcome D</div>
+      <div class="name">👑 Dispatch via apex</div>
+      <div class="body">
+        For multi-domain missions: route through <code>hft-cto</code> (or your project's apex), which orchestrates <strong>chiefs → leads → specialists</strong> with the consult protocol. Apex merges outputs + applies final clearance.
+      </div>
+    </div>
+  </div>
+
+  <div class="rules">
+    <div class="label">Rules<br>of thumb</div>
+    <div class="items">
+      <strong>Built-ins also exist</strong> — <code>Plan</code> (designs implementation plans without executing), <code>general-purpose</code> (full toolset, when no specialist fits).
+      Use them as fallbacks, not first choices.
+      &nbsp;·&nbsp;
+      <strong>If specialists disagree</strong>, call the <code>architecture-review-board</code> arbiter — it emits a binding ADR.
+      &nbsp;·&nbsp;
+      <strong>Never spawn an agent that hallucinates</strong> a domain you don't have a specialist for. If the gap is real, build the specialist first.
+    </div>
+  </div>
+</body></html>

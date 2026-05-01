@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>A day in the life</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --coral:    #d97757;
+    --coral-2:  #c96442;
+    --peach:    #fbbf95;
+    --peach-2:  #fed7aa;
+    --cream:    #faf3e0;
+    --cream-2:  #fef6e4;
+    --warm-bg:  #15110e;
+    --warm-bg2: #0a0806;
+  }
+
+  body {
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+    background:
+      radial-gradient(900px 600px at 90% 8%, rgba(217,119,87,0.16), transparent 60%),
+      radial-gradient(700px 500px at 8% 92%, rgba(251,191,149,0.10), transparent 60%),
+      linear-gradient(135deg, #15110e 0%, #0a0806 60%, #1a0f0a 100%);
+    padding: 44px 64px 36px 64px;
+    width: 1280px; min-height: 600px; height: auto;
+    color: var(--cream-2);
+    position: relative;
+  }
+
+  h1 {
+    font-size: 32px; font-weight: 800;
+    margin-bottom: 6px; letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #ffffff 0%, var(--peach-2) 50%, var(--coral) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .sub {
+    color: rgba(254,246,228,0.65);
+    font-size: 14px; margin-bottom: 38px;
+    max-width: 1000px;
+    line-height: 1.5;
+  }
+
+  .timeline { position: relative; }
+  .timeline::before {
+    content: ""; position: absolute; left: 116px; top: 12px; bottom: 12px;
+    width: 2px;
+    background: linear-gradient(180deg,
+      rgba(217,119,87,0.55) 0%,
+      rgba(217,119,87,0.30) 50%,
+      rgba(217,119,87,0.10) 100%);
+    border-radius: 2px;
+  }
+
+  .row {
+    display: grid; grid-template-columns: 100px 1fr; gap: 32px;
+    margin-bottom: 18px; position: relative;
+  }
+  .time {
+    text-align: right; padding-right: 8px; padding-top: 12px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    color: var(--peach);
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  .card {
+    background: rgba(20,15,12,0.78);
+    border: 1px solid rgba(217,119,87,0.20);
+    border-radius: 12px; padding: 14px 18px;
+    box-shadow: 0 6px 22px -10px rgba(0,0,0,0.6);
+    position: relative;
+    border-left: 3px solid #93c5fd;
+  }
+  .card::before {
+    content: ""; position: absolute; left: -28px; top: 18px;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--warm-bg);
+    border: 3px solid #93c5fd;
+    box-shadow: 0 0 0 3px rgba(147,197,253,0.10);
+  }
+
+  /* Category accents — tinted toward Anthropic's warm palette */
+  .card.fire   { border-left-color: var(--coral); }
+  .card.fire::before  { border-color: var(--coral); box-shadow: 0 0 0 3px rgba(217,119,87,0.20); }
+  .card.write  { border-left-color: #86efac; }
+  .card.write::before { border-color: #86efac; box-shadow: 0 0 0 3px rgba(134,239,172,0.16); }
+  .card.async  { border-left-color: #f9a8d4; }
+  .card.async::before { border-color: #f9a8d4; box-shadow: 0 0 0 3px rgba(244,168,212,0.16); }
+  .card.review { border-left-color: #c4b5fd; }
+  .card.review::before{ border-color: #c4b5fd; box-shadow: 0 0 0 3px rgba(196,181,253,0.16); }
+
+  .card .what {
+    font-weight: 700; font-size: 15px; margin-bottom: 3px;
+    color: var(--cream-2);
+  }
+  .card.fire   .what { color: var(--peach-2); }
+  .card.write  .what { color: #bbf7d0; }
+  .card.async  .what { color: #fbcfe8; }
+  .card.review .what { color: #ddd6fe; }
+
+  .card .who {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px; color: rgba(251,191,149,0.70);
+    margin-top: 1px;
+  }
+  .card .why {
+    font-size: 13px; color: rgba(254,246,228,0.72);
+    margin-top: 5px; line-height: 1.5;
+  }
+
+  .legend {
+    margin-top: 30px;
+    padding-top: 18px;
+    border-top: 1px dashed rgba(217,119,87,0.20);
+    display: flex; gap: 28px; font-size: 12px;
+    color: rgba(254,246,228,0.65);
+    letter-spacing: 0.5px;
+    flex-wrap: wrap;
+  }
+  .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    display: inline-block; margin-right: 8px; vertical-align: middle;
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.04);
+  }
+</style></head>
+<body>
+  <h1>One Day, One Project — what fires when</h1>
+  <div class="sub">A composite Tuesday: open laptop → ship a bugfix → close out for the night. Showing only the events you care about (auto-managed background noise omitted).</div>
+
+  <div class="timeline">
+    <div class="row"><div class="time">09:12</div><div class="card fire"><div class="what">SessionStart hook fires</div><div class="who">~/.claude/hooks/session_start.sh</div><div class="why">Injects "recent workbooks" hint. Defers to project's own SessionStart if graphify report exists.</div></div></div>
+    <div class="row"><div class="time">09:13</div><div class="card"><div class="what">UserPromptSubmit injects context</div><div class="who">~/.claude/hooks/user_prompt_submit.sh</div><div class="why">Adds &lt;context&gt; with timestamp, cwd, branch, top-5 git status. Every prompt, ≤30 lines.</div></div></div>
+    <div class="row"><div class="time">09:14</div><div class="card review"><div class="what">brainstorming skill auto-invoked</div><div class="who">superpowers/brainstorming</div><div class="why">"Let's redesign the WAL writer" → skill explores tradeoffs first instead of jumping to code.</div></div></div>
+    <div class="row"><div class="time">09:22</div><div class="card"><div class="what">writing-plans skill produces /plan</div><div class="who">superpowers/writing-plans</div><div class="why">Plan written to ~/.claude/plans/&lt;slug&gt;.md with verification gates per step.</div></div></div>
+    <div class="row"><div class="time">09:31</div><div class="card"><div class="what">3 Explore agents in parallel</div><div class="who">Agent (Explore × 3)</div><div class="why">Each maps one subsystem in &lt;90s. Recon delivered in one round trip.</div></div></div>
+    <div class="row"><div class="time">09:48</div><div class="card write"><div class="what">test-driven-development → red tests</div><div class="who">superpowers/TDD</div><div class="why">Failing tests written first. Force a verifiable definition of "done".</div></div></div>
+    <div class="row"><div class="time">10:14</div><div class="card write"><div class="what">PreToolUse hook gates every Bash/Edit</div><div class="who">~/.claude/hooks/pre_tool_use.sh</div><div class="why">Blocks .env, rm -rf /, curl|bash. Defense-in-depth alongside settings.json deny rules.</div></div></div>
+    <div class="row"><div class="time">10:51</div><div class="card review"><div class="what">Gemini second-opinion called</div><div class="who">mcp__gemini__gemini_second_opinion</div><div class="why">Drafted plan red-teamed by 3.1-pro-preview before implementation lands.</div></div></div>
+    <div class="row"><div class="time">11:37</div><div class="card write"><div class="what">post-commit graphify regen</div><div class="who">.githooks/post-commit</div><div class="why">Knowledge graph auto-rebuilt on .py commit (~2s warm). Architecture map stays current.</div></div></div>
+    <div class="row"><div class="time">12:04</div><div class="card review"><div class="what">code-reviewer-generic dispatched</div><div class="who">Agent (code-reviewer-generic)</div><div class="why">PR diff reviewed independently before push. Karpathy discipline enforced.</div></div></div>
+    <div class="row"><div class="time">17:48</div><div class="card async"><div class="what">/exit → Stop hook archives session</div><div class="who">~/.claude/hooks/session_stop_archive.sh</div><div class="why">Async, idempotent. transcript + workbook + plan → ~/claude-archive/2026/04/&lt;project&gt;/&lt;sid&gt;/.</div></div></div>
+  </div>
+
+  <div class="legend">
+    <span><span class="dot" style="background:#93c5fd"></span>System</span>
+    <span><span class="dot" style="background:#d97757"></span>Hook</span>
+    <span><span class="dot" style="background:#86efac"></span>Write</span>
+    <span><span class="dot" style="background:#c4b5fd"></span>Review / 2nd opinion</span>
+    <span><span class="dot" style="background:#f9a8d4"></span>Async</span>
+  </div>
+</body></html>
