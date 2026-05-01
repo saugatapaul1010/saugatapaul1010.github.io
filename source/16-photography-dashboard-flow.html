@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Photography Dashboard — Build Flow</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+    background:
+      radial-gradient(1100px 700px at 50% 30%, rgba(96,165,250,0.10), transparent 70%),
+      linear-gradient(180deg, #0f172a 0%, #020617 100%);
+    width: 1800px; min-height: 800px; height: auto;
+    padding: 40px 60px 50px 60px;
+    color: #e2e8f0;
+    position: relative;
+  }
+  h1 {
+    font-size: 38px; font-weight: 800; letter-spacing: -0.5px;
+    text-align: center; color: #f8fafc; margin-bottom: 4px;
+  }
+  .sub {
+    text-align: center; color: #94a3b8; font-size: 16px;
+    margin-bottom: 28px;
+  }
+  .meta-row {
+    text-align: center; margin-bottom: 30px;
+  }
+  .meta-pill {
+    display: inline-block;
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 5px 11px; border-radius: 999px;
+    margin: 0 6px;
+    background: rgba(96,165,250,0.10);
+    border: 1px solid rgba(96,165,250,0.35);
+    color: #93c5fd;
+  }
+
+  /* ────────── Phase banner ────────── */
+  .phase {
+    margin: 22px 0 6px 0;
+    padding: 8px 18px;
+    font-size: 11px; font-weight: 800;
+    letter-spacing: 2.5px; text-transform: uppercase;
+    border-radius: 999px;
+    text-align: center;
+    width: 100%;
+  }
+  .phase .badge-time {
+    margin-left: 10px;
+    font-family: "SF Mono", Menlo, monospace;
+    opacity: 0.7;
+  }
+  .phase.A { background: rgba(96,165,250,0.10); color: #93c5fd; border: 1px solid rgba(96,165,250,0.35); }
+  .phase.B { background: rgba(134,239,172,0.10); color: #86efac; border: 1px solid rgba(134,239,172,0.35); }
+  .phase.C { background: rgba(196,181,253,0.10); color: #c4b5fd; border: 1px solid rgba(196,181,253,0.35); }
+  .phase.D { background: rgba(103,232,249,0.10); color: #67e8f9; border: 1px solid rgba(103,232,249,0.35); }
+  .phase.E { background: rgba(251,191,36,0.10);  color: #fde68a; border: 1px solid rgba(251,191,36,0.35); }
+
+  /* ────────── Event row ────────── */
+  .row {
+    display: grid;
+    grid-template-columns: 80px 130px 1fr;
+    gap: 18px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px dashed rgba(148,163,184,0.10);
+  }
+  .time {
+    text-align: right;
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 13px; font-weight: 700;
+    color: #93c5fd;
+    letter-spacing: 0.5px;
+  }
+  .actor {
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 11px; font-weight: 800;
+    letter-spacing: 1px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    text-align: center;
+    text-transform: uppercase;
+  }
+  .actor.you      { background: rgba(203,213,225,0.14); color: #cbd5e1;   border: 1px solid rgba(203,213,225,0.30); }
+  .actor.claude   { background: rgba(251,191,36,0.14);  color: #fde68a;   border: 1px solid rgba(251,191,36,0.35); }
+  .actor.hooks    { background: rgba(103,232,249,0.14); color: #67e8f9;   border: 1px solid rgba(103,232,249,0.35); }
+  .actor.skill    { background: rgba(196,181,253,0.14); color: #c4b5fd;   border: 1px solid rgba(196,181,253,0.35); }
+  .actor.mcp      { background: rgba(244,114,182,0.14); color: #f9a8d4;   border: 1px solid rgba(244,114,182,0.35); }
+  .actor.agent    { background: rgba(167,139,250,0.14); color: #c4b5fd;   border: 1px solid rgba(167,139,250,0.35); }
+  .actor.tools    { background: rgba(134,239,172,0.14); color: #86efac;   border: 1px solid rgba(134,239,172,0.35); }
+  .actor.github   { background: rgba(148,163,184,0.16); color: #e2e8f0;   border: 1px solid rgba(148,163,184,0.35); }
+  .actor.test     { background: rgba(244,114,182,0.14); color: #f9a8d4;   border: 1px solid rgba(244,114,182,0.35); }
+
+  .desc {
+    font-size: 14px; color: #e2e8f0;
+    line-height: 1.5;
+  }
+  .desc code {
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 12px;
+    background: rgba(148,163,184,0.12);
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: #fde68a;
+  }
+  .desc strong {
+    color: #f8fafc;
+  }
+  .desc .checkmark {
+    color: #86efac; font-weight: 800;
+  }
+
+  /* ────────── Highlight callouts ────────── */
+  .row.hilight {
+    background: linear-gradient(90deg, rgba(134,239,172,0.06) 0%, transparent 100%);
+    border-radius: 8px;
+    padding-left: 8px;
+  }
+  .row.hilight .desc {
+    color: #f8fafc;
+    font-weight: 600;
+  }
+
+  /* ────────── Footer summary ────────── */
+  .summary {
+    margin-top: 28px;
+    padding: 16px 22px;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(96,165,250,0.30);
+    border-radius: 12px;
+    text-align: center;
+    color: #cbd5e1;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .summary .total {
+    font-size: 22px; font-weight: 800;
+    color: #93c5fd;
+    margin-bottom: 4px;
+    letter-spacing: -0.3px;
+  }
+  .summary .breakdown {
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 4px;
+  }
+</style></head>
+<body>
+  <h1>Photography Dashboard — Build Flow</h1>
+  <div class="sub">What happens when you paste <code style="font-family:'SF Mono',Menlo,monospace; background:rgba(148,163,184,0.15); padding:2px 7px; border-radius:4px; color:#93c5fd;">PROJECT_BRIEF.md</code> into a fresh Claude Code session, end-to-end.</div>
+
+  <div class="meta-row">
+    <span class="meta-pill">5 phases</span>
+    <span class="meta-pill">~58 min wall-clock</span>
+    <span class="meta-pill">23 quality gates</span>
+    <span class="meta-pill">15+ commits auto-pushed</span>
+    <span class="meta-pill">3 specialist agents in parallel</span>
+  </div>
+
+  <!-- ─── PHASE A · Plan mode ─── -->
+  <div class="phase A">▶  Phase A · Plan mode  <span class="badge-time">~ 12 min · NO system changes</span>  ◀</div>
+
+  <div class="row">
+    <div class="time">0:00</div>
+    <div class="actor you">YOU</div>
+    <div class="desc">Paste <code>PROJECT_BRIEF.md</code> as your first message in a fresh Claude session.</div>
+  </div>
+
+  <div class="row">
+    <div class="time">0:00</div>
+    <div class="actor hooks">HOOK</div>
+    <div class="desc"><code>session_start.sh</code> &amp; <code>user_prompt_submit.sh</code> auto-fire — workbook hint + <code>&lt;context&gt;</code> block (cwd, branch, git status) prepend to your prompt.</div>
+  </div>
+
+  <div class="row">
+    <div class="time">0:10</div>
+    <div class="actor claude">CLAUDE</div>
+    <div class="desc">Reads brief → enters <strong>plan mode</strong> per §1. Runs §2 pre-flight: <code>pwd</code> · <code>ls photographs/</code> · <code>python3 --version</code> · <code>gh auth status</code> · port 8000/5173 free · pypi/npm/github reachable.</div>
+  </div>
+
+  <div class="row">
+    <div class="time">0:30</div>
+    <div class="actor claude">CLAUDE</div>
+    <div class="desc">Prints <span class="checkmark">✓ pre-flight clean</span>, then asks 5 batched clarifying questions (§13: photographer name, tagline, accent palette, repo visibility, about text).</div>
+  </div>
+
+  <div class="row">
+    <div class="time">2:00</div>
+    <div class="actor you">YOU</div>
+    <div class="desc">Answer the 5 questions in one reply.</div>
+  </div>
+
+  <div class="row">
+    <div class="time">2:10</div>
+    <div class="actor skill">SKILL</div>
+    <div class="desc"><code>superpowers:brainstorming</code> — Claude surfaces tradeoffs (gallery row strategy · comment anti-spam approach · CDN vs self-hosted thumbs). No code yet.</div>
+  </div>
+
+  <div class="row">
+    <div class="time">6:00</div>
+    <div class="actor skill">SKILL</div>
+    <div class="desc"><code>superpowers:writing-plans</code> writes the plan to <code>~/.claude/plans/&lt;slug&gt;.md</code> with verification gates per step.</div>
+  </div>
+
+  <div class="row">
+    <div class="time">8:00</div>
+    <div class="actor mcp">MCP</div>
+    <div class="desc"><code>mcp__gemini__gemini_second_opinion(plan, draft)</code> → adversarial red-team from Google Gemini. Plan is revised if Gemini flags real issues.</div>
+  </div>
+
+  <div class="row hilight">
+    <div class="time">12:00</div>
+    <div class="actor you">YOU</div>
+    <div class="desc"><strong>Click "Yes, proceed"</strong> on <code>ExitPlanMode</code>. Plan mode exits → execution starts. <em>Until this click, ZERO files have been written and no GitHub repo exists.</em></div>
+  </div>
+
+  <!-- ─── PHASE B · Bootstrap ─── -->
+  <div class="phase B">▼  Phase B · Bootstrap (the new repo appears)  <span class="badge-time">~ 5 min</span>  ▼</div>
+
+  <div class="row">
+    <div class="time">12:01</div>
+    <div class="actor skill">SKILL</div>
+    <div class="desc"><code>project-bootstrap</code> skill scaffolds: <code>CLAUDE.md</code> (project-level, non-trading) · <code>.claude/workbooks/2026-05-01-photography-dashboard.md</code> · <code>.githooks/post-commit</code> (graphify auto-regen) · <code>docs/ADRs/</code> · <code>docs/advisories/</code> · <code>regression-ledger.md</code>.</div>
+  </div>
+
+  <div class="row">
+    <div class="time">13:00</div>
+    <div class="actor tools">git</div>
+    <div class="desc"><code>git init -b main</code> · <code>git config core.hooksPath .githooks</code> · first commit <code>chore: project bootstrap</code>.</div>
+  </div>
+
+  <div class="row hilight">
+    <div class="time">13:30</div>
+    <div class="actor github">gh</div>
+    <div class="desc"><code>gh repo create saugatapaul1010/photography-dashboard --private --source=. --remote=origin --push</code> · <span class="checkmark">🟢 NEW REPO LIVE on GitHub.</span> First commit pushed.</div>
+  </div>
+
+  <div class="row">
+    <div class="time">14:00</div>
+    <div class="actor tools">venv</div>
+    <div class="desc"><code>python3 -m venv .venv</code> · <code>source .venv/bin/activate</code> · pip pinned-versions install — <strong>never</strong> touches system / conda Python.</div>
+  </div>
+
+  <div class="row">
+    <div class="time">16:00</div>
+    <div class="actor tools">vite</div>
+    <div class="desc"><code>npm create vite@latest web -- --template react-ts</code> · <code>npm ci</code> · second commit + push <code>chore: scaffold backend venv + frontend Vite app</code>.</div>
+  </div>
+
+  <!-- ─── PHASE C · Parallel implementation ─── -->
+  <div class="phase C">▶  Phase C · Parallel implementation  <span class="badge-time">~ 28 min · 3 agents in parallel</span>  ◀</div>
+
+  <div class="row">
+    <div class="time">17:00</div>
+    <div class="actor skill">SKILL</div>
+    <div class="desc"><code>superpowers:dispatching-parallel-agents</code> fans out three Tasks in ONE Claude turn:</div>
+  </div>
+
+  <div class="row">
+    <div class="time">17:00</div>
+    <div class="actor agent">AGENT 1</div>
+    <div class="desc"><strong>backend-specialist</strong> · writes FastAPI app, 8 endpoints, EXIF parser, thumb cache, comment rate-limiter, pytest suite (red→green).</div>
+  </div>
+
+  <div class="row">
+    <div class="time">17:00</div>
+    <div class="actor agent">AGENT 2</div>
+    <div class="desc"><strong>frontend-specialist</strong> · scaffolds gallery, lightbox (with focus trap), stats panel, comment widget, navigation, vitest unit tests.</div>
+  </div>
+
+  <div class="row">
+    <div class="time">17:00</div>
+    <div class="actor agent">AGENT 3</div>
+    <div class="desc"><strong>devops-specialist</strong> · writes <code>.github/workflows/ci.yml</code>, <code>scripts/dev.sh</code>, <code>scripts/test.sh</code>, <code>.gitignore</code>, <code>README.md</code>.</div>
+  </div>
+
+  <div class="row">
+    <div class="time">17—45</div>
+    <div class="actor claude">CLAUDE</div>
+    <div class="desc">After each slice → <code>code-reviewer-generic</code> agent independently reviews → <code>git add . &amp;&amp; git commit &amp;&amp; git push</code>. Each push triggers GitHub Actions CI.</div>
+  </div>
+
+  <div class="row">
+    <div class="time">17—45</div>
+    <div class="actor github">CI</div>
+    <div class="desc">GitHub Actions runs <code>backend</code> + <code>frontend</code> jobs (ruff · pytest · typecheck · lint · build) per push. Workflow file pinned to <code>actions/checkout@v4</code> · <code>setup-python@v5</code> · <code>setup-node@v4</code>.</div>
+  </div>
+
+  <!-- ─── PHASE D · Verification ─── -->
+  <div class="phase D">▼  Phase D · Verification (sequential, never parallel with implementation)  <span class="badge-time">~ 12 min</span>  ▼</div>
+
+  <div class="row">
+    <div class="time">45:00</div>
+    <div class="actor tools">nohup</div>
+    <div class="desc"><code>uvicorn app.main:app --port 8000</code> + <code>npm run preview --port 5173</code> as background processes — logs in <code>.logs/</code>, PIDs saved. Servers survive past <code>/exit</code>.</div>
+  </div>
+
+  <div class="row">
+    <div class="time">46:00</div>
+    <div class="actor claude">CLAUDE</div>
+    <div class="desc">Backend startup hook generates <strong>thumb warmup</strong> — 55 PNGs cached in <code>.thumbs/</code> before first page load is served.</div>
+  </div>
+
+  <div class="row">
+    <div class="time">47:00</div>
+    <div class="actor mcp">MCP</div>
+    <div class="desc"><code>mcp__playwright__browser_navigate</code> → real headless Chromium boots. Per §15.3: <code>waitForLoadState('networkidle')</code> + <code>document.fonts.ready</code> before each snapshot.</div>
+  </div>
+
+  <div class="row">
+    <div class="time">49:00</div>
+    <div class="actor test">SMOKE</div>
+    <div class="desc">Site loads · gallery shows ≥ 50 cards · click → lightbox opens · <code>Esc</code> closes · post a comment, see it appear. <span class="checkmark">all green</span></div>
+  </div>
+
+  <div class="row">
+    <div class="time">51:00</div>
+    <div class="actor test">REGRESSION</div>
+    <div class="desc">Filter by orientation · sort by oldest · keyboard nav · <strong>focus trap inside lightbox</strong> · 6th rapid POST → 429. <span class="checkmark">all green</span></div>
+  </div>
+
+  <div class="row">
+    <div class="time">53:00</div>
+    <div class="actor test">LIGHTHOUSE</div>
+    <div class="desc">Run × 3 · take median · Performance ≥ 75 · Accessibility ≥ 90.</div>
+  </div>
+
+  <div class="row">
+    <div class="time">54:00</div>
+    <div class="actor github">CI</div>
+    <div class="desc"><code>gh run list --branch main --limit 1 --json status,conclusion</code> · poll until latest run is at least started + first 30s clean.</div>
+  </div>
+
+  <div class="row">
+    <div class="time">56:00</div>
+    <div class="actor claude">CLAUDE</div>
+    <div class="desc">All <strong>23 quality gates</strong> ticked green. <code>graphify</code> regenerates the final knowledge-graph HTML.</div>
+  </div>
+
+  <!-- ─── PHASE E · URL handoff ─── -->
+  <div class="phase E">▼  Phase E · URL handoff (the payoff)  <span class="badge-time">~ 1 min</span>  ▼</div>
+
+  <div class="row hilight">
+    <div class="time">57:00</div>
+    <div class="actor claude">CLAUDE</div>
+    <div class="desc">Prints the exact §10 block:<br>
+      <code style="display:block; margin-top:6px; padding:8px 12px; background:rgba(15,23,42,0.85); border:1px solid rgba(134,239,172,0.40); border-radius:6px; color:#86efac; font-size:12px; line-height:1.6;">🟢 LIVE<br>&nbsp;&nbsp;&nbsp;Frontend  ·  http://127.0.0.1:5173/<br>&nbsp;&nbsp;&nbsp;API docs  ·  http://127.0.0.1:8000/docs<br>&nbsp;&nbsp;&nbsp;Repo      ·  github.com/&lt;user&gt;/photography-dashboard<br>&nbsp;&nbsp;&nbsp;CI        ·  …/actions</code>
+    </div>
+  </div>
+
+  <!-- ─── Summary ─── -->
+  <div class="summary">
+    <div class="total">~ 58 min · one prompt · zero clicks beyond plan approval</div>
+    <div>Photography Dashboard — backend + frontend + tests + CI/CD + GitHub repo + local deploy — all delivered, all gated, all reproducible.</div>
+    <div class="breakdown">A: 12 min · B: 5 min · C: 28 min · D: 12 min · E: 1 min</div>
+  </div>
+</body></html>

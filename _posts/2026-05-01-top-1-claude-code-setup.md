@@ -2284,6 +2284,649 @@ That's it. Your tools are now first-class in Claude Code.
 
 ---
 
+---
+
+## Live demo: watch the system build a real app in under an hour
+
+The post above describes the *infrastructure*. This section shows the *workflow* — what happens when that infrastructure is pointed at a brand-new project.
+
+The prompt below — `PROJECT_BRIEF.md` — is what I paste into a fresh Claude Code session to build a photographer's portfolio app from scratch: backend (FastAPI + Pydantic + SQLModel + Pillow), frontend (Vite + React + TS + Tailwind + Framer Motion), tests (pytest + Playwright + Lighthouse), CI/CD (GitHub Actions, pinned action versions), GitHub repo (auto-created), local deploy (background uvicorn + vite preview), URL handoff. **One prompt, ~58 minutes wall clock, zero clicks beyond plan approval.**
+
+\![Photography Dashboard build flow](/diagrams/16-photography-dashboard-flow.png)
+
+### How Claude actually executes the brief
+
+The flow above maps every event to the system layer that produced it.
+
+- **Phase A — Plan mode (~12 min).** Pure deliberation. Pre-flight reads cwd / git status / port availability / pypi+npm+github reachability. Then `superpowers:brainstorming`, then `superpowers:writing-plans`, then a Gemini MCP red-team on the plan. *Zero* files written, *zero* GitHub repo, *zero* code yet.
+- **Phase B — Bootstrap (~5 min).** The moment after I click "Yes, proceed", the `project-bootstrap` skill scaffolds the project files (project-level `CLAUDE.md`, `.claude/workbooks/`, `.githooks/post-commit` for graphify auto-regen). Then `git init` → `gh repo create --private --push`. The GitHub repo materializes around T+13:30. A fresh `.venv/` is created — pip never touches system Python. Vite scaffolds `web/`. Two commits land.
+- **Phase C — Parallel implementation (~28 min).** `superpowers:dispatching-parallel-agents` fans out three Tasks in one Claude turn: `backend-specialist` (FastAPI + 8 endpoints + EXIF + thumbs + comments + pytest), `frontend-specialist` (gallery + lightbox-with-focus-trap + stats + comments + vitest), `devops-specialist` (`.github/workflows/ci.yml` + scripts + README). After each slice → `code-reviewer-generic` → commit → push. Every push triggers GitHub Actions CI on the workflow file written earlier in the same phase.
+- **Phase D — Verification (~12 min, sequential).** Servers boot in the background (`nohup`, logs in `.logs/`), thumb warmup generates 55 PNGs, Playwright MCP runs the smoke + regression suites with `document.fonts.ready` waits and 2% pixel-diff tolerance, Lighthouse runs ×3 (median), `gh run list` polls CI.
+- **Phase E — URL handoff (~1 min).** All 23 quality gates printed green, then the `🟢 LIVE` block with frontend / API docs / repo / CI URLs.
+
+### The full prompt
+
+The full `PROJECT_BRIEF.md` lives in the open-source repo at [`examples/photography-dashboard/PROJECT_BRIEF.md`](https://github.com/saugatapaul1010/claude-code-top1-setup/blob/main/examples/photography-dashboard/PROJECT_BRIEF.md) — copy it from there, or expand the inline version below.
+
+<details>
+<summary><strong>📋 Click to expand the full PROJECT_BRIEF.md (~600 lines)</strong></summary>
+
+<div style="max-height: 700px; overflow-y: auto; border: 1px solid rgba(125,125,125,0.2); padding: 16px; border-radius: 8px; margin-top: 12px; font-size: 13px;">
+
+
+{% raw %}
+```markdown
+# PROJECT_BRIEF — `photography-dashboard`
+## A live, end-to-end build orchestrated by the top-1% Claude Code setup
+
+
+## §0 · Mission
+
+You are Claude Code, operating inside Saugata Paul's top-1% setup (hooks, skills, 36 specialist agents, 5 MCP servers, four-tier memory). Your mission for this session is to **build a real, production-grade photographer's portfolio web application — backend + frontend + tests + CI/CD + local deploy — end-to-end**, using the photographs already present at `./photographs/`. You will use my system to its full potential: parallel agent dispatch, MCP consults for adversarial review and live docs, Playwright-driven visual QA, mission workbooks, post-commit graphify regen. You will not skip discipline. You will not write a single line of code until I have approved your plan. You will not hand me a URL until every blocking quality gate is green. The result must be visually arresting, technically correct, and reproducible from the repo by anyone who clones it.
+
+**Audience signal.** This session will be screen-recorded. The viewer should see *real* hooks fire, *real* agents dispatch in parallel, *real* MCP consults resolve, *real* tests turn red and then green, *real* Playwright frames assert visual correctness, and *real* commits push to GitHub. Polish over speed in the visible moments; speed via parallelism in the back-end work.
+
+**This is a brand-new, greenfield, NON-trading project.** It is unrelated to my HFT codebase. Domain assumptions from my global `~/.claude/CLAUDE.md` (anything mentioning HFT, trading, market data, latency, brokers, indicators, WAL, order books, four-tier agent hierarchy) **do not apply here**. They were authored for a different codebase.
+
+The conventions you DO inherit from `~/.claude/CLAUDE.md` are domain-neutral: workbook protocol, Karpathy discipline, MCP usage rules, hook safety, archive behavior. Anything trading-specific — ignore.
+
+The project will get its own `./CLAUDE.md` at the repo root (created by `project-bootstrap` skill at session start) declaring photography-specific conventions. **This per-project file overrides the global where they conflict.**
+
+---
+
+## §1 · Operating mode (binding contract)
+
+1. **Enter plan mode immediately** when this brief is delivered. Do not write code. Do not edit files. Do not commit. Do not run anything beyond read-only pre-flight checks (§2) until I have approved your plan in plan mode.
+2. **Brainstorm with me before planning.** Use the `superpowers:brainstorming` skill to surface tradeoffs (e.g. masonry vs grouped-strip gallery, anonymous vs identified comments, self-hosted thumbs vs CDN). Show your reasoning. Quote the specific tradeoffs. Don't decide unilaterally on anything that affects user-visible behavior.
+3. **Ask clarifying questions as a single batched list** (not one at a time). I prefer 3–5 sharp questions over 12 vague ones.
+4. **Write the plan via `superpowers:writing-plans`.** The plan must include verification gates per step. Each gate must be a check I can run and observe.
+5. **Get a Gemini second opinion (`mcp__gemini__gemini_second_opinion`) on the plan** before requesting my approval — adversarial red-team on tech choices, schema, and risk. Show me Gemini's response verbatim. If Gemini flags something legitimate, revise.
+6. **Approval gate.** Only after I explicitly say "approved" (or click ExitPlanMode "Yes, proceed") do you start writing code.
+7. **TDD throughout.** Use `superpowers:test-driven-development`. Red test first, then production code that makes it green. No exceptions for the backend; for frontend, prefer Playwright E2E + a few vitest unit tests for non-trivial components.
+8. **Mission workbook.** Create `.claude/workbooks/2026-05-01-photography-dashboard.md` at the start of execution. Every dispatched agent reads it and appends a handover block at task end (per the convention in `~/.claude/CLAUDE.md`). I will grep this workbook later, so make it dense with file:line evidence.
+9. **Continuous git, auto-pushed.** After EVERY meaningful slice (schema, endpoint group, gallery component, lightbox, stats, comments, CI workflow, README, etc.) → `git add -A && git commit -m "<conventional commit>" && git push` — without prompting me, without asking permission, every single slice. Push to `main` directly is fine for v1; we're not running PR review for a solo demo. Each push triggers GitHub Actions on the workflow you wrote earlier (see §9 / §15.2). The post-commit `.githooks/post-commit` regenerates the graphify HTML report locally; if the hook doesn't run, install one (the `project-bootstrap` skill installs it). **Do not batch commits.** A 12-commit history is more legible than a 2-commit history and surfaces what each agent did.
+10. **Stop hook archives.** When I `/exit`, the session stop hook will snapshot the workbook + plan + transcript into `~/claude-archive/2026/05/photography-dashboard/<sid>/`. Don't fight it.
+
+---
+
+## §2 · Pre-flight (read-only, run BEFORE proposing a plan)
+
+Run these checks in a single bash invocation. Print one line per check. End with `✓ pre-flight clean` or `✗ blocker: <reason>`. If any check fails, stop and tell me — do not improvise around blockers.
+
+```bash
+echo "=== Pre-flight ==="
+echo -n "cwd: " && pwd
+echo -n "photographs: " && ls photographs/ 2>/dev/null | wc -l
+echo -n "python3: " && python3 --version 2>&1 | head -1
+echo -n "node: " && node --version 2>&1
+echo -n "npm: " && npm --version 2>&1
+echo -n "git: " && git --version 2>&1
+echo -n "gh auth: " && (gh auth status 2>&1 | grep -E "Logged in|Token" | head -1 || echo "not authenticated")
+echo -n "uvicorn: " && (python3 -c "import uvicorn; print(uvicorn.__version__)" 2>/dev/null || echo "not installed at system level — will install into .venv (correct)")
+echo -n "venv module: " && (python3 -c "import venv; print('ok')" 2>&1)
+echo -n ".venv exists: " && ([ -d .venv ] && echo "yes (will reuse)" || echo "no (will create)")
+echo -n "free disk: " && df -h . | tail -1 | awk '{print $4}'
+echo -n "port 8000: " && (ss -tln 2>/dev/null | grep -q ':8000 ' && echo "IN USE" || echo "free")
+echo -n "port 5173: " && (ss -tln 2>/dev/null | grep -q ':5173 ' && echo "IN USE" || echo "free")
+echo -n "pypi reachable: " && (curl -sI -m 5 https://pypi.org/simple/ 2>/dev/null | head -1 || echo "UNREACHABLE")
+echo -n "npm reachable: "  && (curl -sI -m 5 https://registry.npmjs.org/ 2>/dev/null | head -1 || echo "UNREACHABLE")
+echo -n "github API: "     && (curl -sI -m 5 https://api.github.com 2>/dev/null | head -1 || echo "UNREACHABLE")
+```
+
+Expected:
+- cwd ends with `photography-dashboard-application`
+- photographs count: `55`
+- python3 ≥ 3.11
+- node ≥ 20, npm ≥ 10
+- gh auth: ✓ Logged in
+- ≥ 1 GB free disk
+- ports 8000 (backend) and 5173 (frontend) are **free**. If either is in use, do NOT just kill the other process — auto-pick replacements (8001+, 5174+) and propagate the chosen ports through Vite/uvicorn config + the §10 handoff URLs. Tell me which ports you picked.
+
+If any of these fail, surface the blocker and propose a fix instead of marching on.
+
+---
+
+## §3 · Layer invocation contract — the "use my system" map
+
+You have access to a deep stack of subsystems. Use them. The video viewer is here for *exactly* this part — show the system working.
+
+| Trigger / phase | Layer to invoke | Purpose |
+|---|---|---|
+| Session launch | `session_start.sh` (auto) — workbook hint preloaded | Episodic continuity |
+| First prompt (this brief) | `user_prompt_submit.sh` (auto) — `<context>` block prepended | Knows cwd / branch / git status |
+| Architecture design | **`superpowers:brainstorming`** | Force tradeoff exploration before code |
+| Plan authoring | **`superpowers:writing-plans`** | Plan with verification gates per step |
+| Plan red-team | **`mcp__gemini__gemini_second_opinion`** | Adversarial cross-model review of plan + schema |
+| Repo creation (ONE-TIME bootstrap, idempotent) | `gh repo create saugatapaul1010/photography-dashboard --private --source=.` (after I confirm name + visibility) — if it already exists, skip and proceed | New repo per project, not a fork or branch of anything |
+| Implementation slices | **`superpowers:dispatching-parallel-agents`** dispatching `backend-specialist` + `frontend-specialist` + `devops-specialist` | True parallel execution, single Claude turn |
+| Library / API uncertainty | **`mcp__context7__*`** | Fetch current docs for FastAPI, Pillow, TanStack Query, shadcn etc. before importing |
+| Code review per slice | `code-reviewer-generic` agent | Pre-commit independent review |
+| Visual / UI QA | **`mcp__playwright__browser_*`** | navigate · snapshot · evaluate · assert no console errors |
+| Verification before completion | **`superpowers:verification-before-completion`** | Don't claim "works" without running it |
+| Final knowledge graph | **`graphify`** skill | One HTML + JSON map of the finished project |
+| Each commit | git auto-commit + `.githooks/post-commit` regenerates graphify | Architecture map stays current |
+| Session close | `session_stop_archive.sh` (auto) | Phase-1 lossless archive |
+
+**Mandatory dispatch protocol.** When you need backend + frontend + devops work in parallel, dispatch them in **one** message with three concurrent `Task` calls. Don't sequence what can parallelize. Each agent must read the workbook, append a handover block, and cite file:line evidence in its summary. Reject any handover that lacks file:line citations.
+
+---
+
+## §4 · Tech stack (LOCKED — do not improvise)
+
+### Backend
+| Layer | Choice | Reason |
+|---|---|---|
+| Language | **Python 3.11+** | available, fast iteration |
+| Framework | **FastAPI** | OpenAPI / Swagger out of the box at `/docs` and `/redoc` |
+| Schemas | **Pydantic v2** | type safety, codegen-friendly |
+| ORM / models | **SQLModel** (over SQLite) | one schema for DB + API |
+| Image I/O | **Pillow** + **piexif** (or `ExifRead`) | thumbs + EXIF parsing |
+| Tests | **pytest** + **httpx** | sync test client over the ASGI app |
+| Lint / format | **ruff** + **ruff format** | one tool, fast |
+| Server | **uvicorn** | dev: `uvicorn app.main:app --reload --port 8000` |
+| Env isolation | **Fresh `.venv/` in project root** | NEVER install into system / conda / base Python |
+
+### Python environment & dependency hygiene (mandatory)
+
+**Never install Python deps into system Python or conda base.** All Python work happens inside a project-local virtualenv:
+
+```bash
+# At setup (only once, but idempotent)
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt        # runtime deps, pinned
+pip install -r requirements-dev.txt    # pytest/ruff/httpx, pinned
+```
+
+Deliverables:
+- `requirements.txt` — runtime deps, **exact versions pinned** (e.g. `fastapi==0.115.0`, `pydantic==2.9.2`, `sqlmodel==0.0.22`, `pillow==10.4.0`, `piexif==1.1.3`, `uvicorn[standard]==0.32.0`). Verify each version via `mcp__context7__resolve-library-id` + `query-docs` before pinning.
+- `requirements-dev.txt` — `pytest`, `pytest-asyncio`, `httpx`, `ruff`, `pre-commit` — all pinned.
+- `.venv/` is **gitignored** (never committed).
+- All scripts (`scripts/dev.sh`, `scripts/test.sh`) source `.venv/bin/activate` at the top.
+- All commands in CI prefix with `source .venv/bin/activate &&` — never invoke `pip` or `python3` outside the venv.
+- The pre-flight (§2) check `which python` after activation must resolve to `<project>/.venv/bin/python`, not `/usr/bin/python3` or `/home/neo/miniconda3/bin/python`.
+
+### API documentation (Swagger / ReDoc)
+
+FastAPI generates this for free, but you must:
+- **Annotate every endpoint** with `summary=`, `description=`, `tags=`, response models, and status codes (`responses={...}`)
+- Group endpoints under tags: `["photos"]`, `["comments"]`, `["stats"]`, `["health"]`
+- Set `app = FastAPI(title="Photography Dashboard API", version="1.0.0", description="...", docs_url="/docs", redoc_url="/redoc", openapi_url="/openapi.json")`
+- Verify Swagger renders with all endpoints, all examples, and a working "Try it out" button — Playwright opens `/docs`, asserts presence of each endpoint path, and screenshots the page. This is a §9 quality gate.
+- Export a snapshot of the spec to `docs/openapi.json` on build (so the JSON ships in the repo even if the server is down).
+
+### Determinism: ship fonts locally, no CDNs
+
+To make Playwright visual diffs stable across runs, **do not load fonts from Google Fonts CDN**. Use the `@fontsource/inter` and `@fontsource/jetbrains-mono` npm packages and import them in `main.tsx`. Network-borne fonts cause first-paint timing variance that breaks pixel-diff baselines.
+
+### Frontend
+| Layer | Choice | Reason |
+|---|---|---|
+| Bundler | **Vite** | fastest DX, instant HMR |
+| Framework | **React 18 + TypeScript** (strict) | per the brief |
+| Styling | **Tailwind CSS** | fast, modern |
+| Components | **shadcn/ui** primitives | not a heavy framework, just patterns to copy |
+| Animation | **Framer Motion** | for hero / lightbox / page transitions |
+| Data | **@tanstack/react-query** | caching, retries, suspense |
+| Routing | **react-router-dom v6** | SPA navigation |
+| Tests | **vitest** (unit) + **@playwright/test** (E2E) | full pyramid |
+| Lint | **eslint** + **typescript-eslint** strict |
+
+### Anti-list (DO NOT introduce)
+- Next.js (we're SPA-only — overkill)
+- Redux / Zustand / Jotai (TanStack Query is enough)
+- GraphQL / tRPC (REST is fine)
+- Postgres / MySQL / Mongo (SQLite is plenty for 55 photos)
+- Docker / Kubernetes for v1 (uvicorn + vite preview is the deploy target)
+- Authentication, OAuth, JWT (anonymous comments only)
+- A CDN
+- A logging stack (`logging.basicConfig` is enough)
+- Any library you can't verify with Context7 in this session
+
+If you find yourself reaching for one of these, stop and ask me. Do not silently swap.
+
+---
+
+## §5 · Visual design language (the "audience gets blown away" spec)
+
+### Palette (dark, sophisticated, gallery-grade)
+
+| Token | Hex | Use |
+|---|---|---|
+| `--bg-0` | `#08080a` | page background (deepest) |
+| `--bg-1` | `#0e0e12` | section bg |
+| `--bg-2` | `#15151a` | card / panel bg |
+| `--bg-3` | `#1c1c24` | hover / elevated |
+| `--border-1` | `rgba(255,255,255,0.06)` | hairline |
+| `--border-2` | `rgba(255,255,255,0.10)` | hover hairline |
+| `--text-1` | `#fafafa` | primary text |
+| `--text-2` | `rgba(250,250,250,0.72)` | secondary |
+| `--text-3` | `rgba(250,250,250,0.45)` | tertiary / captions |
+| `--accent` | *TBD — propose 3 to user in plan mode* | CTA, focus rings, signature gradient endpoint |
+
+**Propose three accent palettes in plan mode and let me pick:**
+1. **Amber Ember** — `#f59e0b → #b45309` (warm, photographer-classic)
+2. **Violet Dusk** — `#a78bfa → #6d28d9` (modern, gallery-tech)
+3. **Cyan Frost** — `#22d3ee → #0e7490` (cinematic, cool)
+
+### Gradients
+- **Use sparingly.** Section-edge dividers, hero overlay, hover glow on photo cards. Never as page background — that screams 2010.
+- Pattern: `linear-gradient(135deg, var(--accent) 0%, transparent 70%)` at low opacity, layered over a dark card.
+
+### Typography
+- UI: **Inter** (variable) — `400` for body, `600` for nav/labels, `800` for hero/section heads
+- Mono: **JetBrains Mono** for any code, EXIF chips, footer hash
+- Scale: 14 / 15 / 17 / 22 / 32 / 56 px (no in-between)
+- Letter-spacing: -0.5px on hero, -0.2px on h2, normal on body
+
+### Motion
+- Transitions: 200–280 ms `cubic-bezier(0.4, 0, 0.2, 1)`
+- Page transitions: `Framer Motion` `AnimatePresence` with `opacity` + 8px `y` slide
+- Lightbox open: scale from card position with backdrop fade-in (240 ms)
+- Hover: image rises 4px, accent glow appears at low opacity, 200 ms
+- **No bouncy springs. No parallax. No autoplaying carousels.** Restrained.
+
+### Layout
+- Max content width: 1440px, side gutters 32px (24 mobile)
+- Hero: full-bleed, 80vh, big photographer name, one-line tagline, scroll cue
+- Gallery: **mixed-orientation strategy** — never mix portrait + landscape in one row. Group rows: a row is either `[landscape, landscape]` (50/50) or `[portrait, portrait, portrait]` (33/33/33). Server returns photos pre-sorted into "rows" for deterministic layout.
+- Stats panel: 4-up grid of glass-y stat cards above a sparkline + donut
+- Footer: 1-line `© <year> · <photographer> · github.com/<user>/photography-dashboard`
+
+### Reference aesthetic
+- Vercel.com homepage (background depth, hairlines)
+- Linear.app (hover micro-interactions, font scale)
+- Apple Photos web (lightbox keyboard nav, gallery breathing room)
+
+---
+
+## §6 · Feature spec (what gets built)
+
+1. **Hero**
+   - Photographer name (big), tagline below, scroll-down chevron
+   - Background: muted hero photo (largest landscape) with `--bg-0` gradient overlay top→bottom
+   - Animation: fade-in + 16px slide on mount
+
+2. **Gallery (`#gallery`)**
+   - All 55 photos
+   - Pre-sorted into "rows" by orientation (server side, see §7)
+   - Lazy-loaded via Intersection Observer / TanStack Query suspense
+   - Card hover: 4px lift + accent glow + EXIF chip (`Camera · Date`)
+   - Click → opens lightbox
+
+3. **Lightbox**
+   - Backdrop: `rgba(0,0,0,0.92)` with subtle radial gradient near photo
+   - Keyboard: `←` / `→` next/prev, `Esc` close, `+` / `-` zoom
+   - EXIF panel on right edge (collapsible): camera, lens, focal length, shutter, ISO, datetime, GPS-stripped
+   - Comment widget at bottom: list + "leave a thought" textarea + Post button (anonymous; optional name field)
+   - **Focus trap is mandatory** — when open, Tab cycles only within the lightbox. Focus returns to the originating gallery card on close. Verified by Playwright in §8.
+
+4. **Stats panel (`#stats`)**
+   - Top: 4 stat cards — Total Photos · Total MB · Date Range · Top Camera
+   - Mid: donut chart — Landscape vs Portrait
+   - Bottom: sparkline — Photos Per Month
+   - All client-side from `/api/stats`; render with Recharts or plain SVG (your call)
+
+5. **Filter / sort bar**
+   - Sticks to top of `#gallery`
+   - Filters: orientation (all / landscape / portrait), camera (auto-populated)
+   - Sort: newest / oldest / random
+
+6. **Navigation**
+   - Sticky top bar, blur-translucent on scroll (`backdrop-filter: blur(12px)` on a `--bg-0/.7` layer)
+   - Brand left, links right (`Gallery · Stats · About`), GitHub icon far right
+
+7. **About section (`#about`)**
+   - One paragraph (TBD content — Claude asks me in plan mode)
+   - Contact: email obfuscated, GitHub link
+
+8. **Footer**
+   - One line as specified above
+
+**Empty / loading / error states are required for each.** Don't ship a happy-path-only UI.
+
+---
+
+## §7 · Backend API surface (must match exactly)
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/photos` | Returns `{rows: PhotoRow[]}` where each row is `{kind: "landscape" \| "portrait", photos: Photo[]}` (server pre-sorted) |
+| `GET` | `/api/photos/{id}` | Single photo metadata |
+| `GET` | `/api/photos/{id}/file` | Original bytes, `Content-Type: image/jpeg` |
+| `GET` | `/api/photos/{id}/thumb?w=400` | Thumb at width `w` (default 400). Generated on-demand if missing, cached on disk under `.thumbs/{id}_{w}.jpg`. **Warmup at startup** generates the 400px tier for all photos so first page load isn't blocked. ETag set. |
+| `GET` | `/api/photos/{id}/comments` | List, sorted newest-first |
+| `POST` | `/api/photos/{id}/comments` | `{author?: string, text: string}` → 201, returns created comment. Validate `text.length ≤ 500`, no HTML, no script. **Rate-limit: 5 posts/min per IP** via in-memory token bucket (no Redis). 429 on excess. |
+| `GET` | `/api/stats` | `{total, total_mb, date_range, top_camera, orientation_split, per_month}` |
+| `GET` | `/api/healthz` | `{"ok": true}` |
+| OpenAPI | `/docs` and `/redoc` | Swagger UI + ReDoc, auto from FastAPI |
+
+### Schema sketch (validate via Gemini second opinion before locking)
+
+```python
+class Photo(SQLModel, table=True):
+    id: int = Field(primary_key=True)
+    filename: str = Field(index=True, unique=True)
+    width: int
+    height: int
+    orientation: str            # "landscape" | "portrait" | "square"
+    size_bytes: int
+    sha256: str = Field(index=True)
+    taken_at: datetime | None
+    camera: str | None          # "Samsung Galaxy S23 Ultra" etc
+    lens: str | None
+    focal_length_mm: float | None
+    f_number: float | None
+    iso: int | None
+    shutter: str | None         # "1/200"
+    # GPS deliberately stripped from the public API surface
+
+class Comment(SQLModel, table=True):
+    id: int = Field(primary_key=True)
+    photo_id: int = Field(foreign_key="photo.id", index=True)
+    author: str | None
+    text: str
+    created_at: datetime
+```
+
+### Initial seed
+On first boot (or via `python -m app.seed`):
+1. Walk `./photographs/`
+2. For each file: compute sha256, parse EXIF, write a `Photo` row
+3. Idempotent — if a sha256 already exists, skip
+
+---
+
+## §8 · Test discipline (TDD pyramid)
+
+| Tier | Tool | Coverage target |
+|---|---|---|
+| Backend unit | pytest | Every endpoint: happy + 1 error case · seed idempotency |
+| Backend integration | pytest + httpx | Full app boot, all endpoints from a fresh DB |
+| Frontend unit | vitest | Component-level for `<PhotoCard>`, `<Lightbox>`, `<StatsCard>`, `<CommentForm>` (the non-trivial ones only) |
+| E2E smoke (Playwright MCP) | live browser | Site loads · gallery shows ≥ 50 cards · lightbox opens on click · `Esc` closes · post a comment, see it appear |
+| E2E regression (Playwright MCP) | live browser | Filter by orientation + sort by oldest · keyboard navigation `← → Esc` · **lightbox focus trap** (Tab cycles only inside) · stats panel renders all 4 cards · empty-state for filtered-to-zero · 429 returned after 6 rapid comment posts |
+| Visual baselines | Playwright `toHaveScreenshot()` | hero · gallery row · lightbox · stats — committed to `tests/visual/` |
+| Lighthouse | scripted via `lighthouse` npm | **Performance ≥ 75** (photo-heavy app, realistic), **Accessibility ≥ 90** (non-negotiable) |
+
+**Red first.** Before each backend endpoint exists, write the failing pytest. Same for the React component tree where it's worth it.
+
+**Visual QA via Playwright MCP** is mandatory before the URL handoff. Use the MCP tools (`mcp__playwright__browser_navigate`, `_snapshot`, `_evaluate`, `_console_messages`) to:
+1. Open the site
+2. **Before EVERY screenshot, wait for stability:** `await page.waitForLoadState('networkidle')` + `await page.evaluate(() => document.fonts.ready)` + 200ms settle delay. Skip these and pixel-diffs will flake.
+3. Snapshot the hero, gallery, a lightbox, the stats panel
+4. **Filter console assertions to `error`-level only** — `warn`-level is noisy (third-party CSS, React StrictMode double-renders). Allow-list: `[]`. Block-list (must be 0): `error`.
+5. Click through one filter combination and snapshot
+6. **Mask volatile regions** in screenshots (`mask: [page.locator('.timestamp')]`) — timestamps, "X minutes ago", random sort orders.
+7. **Pixel-diff tolerance: ≤ 2%** (`maxDiffPixelRatio: 0.02`), not 1%. Sub-pixel font rendering varies by GPU.
+8. **Lighthouse: run 3 times, take the median.** A single run varies ±5-10 points; the median is what represents the build.
+
+---
+
+## §9 · Quality gates (BLOCKING — URL is not handed over until ALL pass)
+
+Print this exact block at the end of your run, with green checks. Each line must correspond to a real verified state.
+
+```
+☑ Quality gates ─────────────────────────────────────
+  ✓ Fresh .venv created                  → which python → .venv/bin/python
+  ✓ requirements.txt + dev installed     → pip list matches pinned versions
+  ✓ pytest -q                            → 0 fail (run inside .venv)
+  ✓ ruff check                           → 0 issues
+  ✓ Swagger /docs renders                → all 8 endpoint paths visible, screenshot saved
+  ✓ ReDoc /redoc renders                 → 200, no console errors
+  ✓ docs/openapi.json exported           → committed to repo
+  ✓ npm run typecheck                    → 0 errors
+  ✓ npm run lint                         → 0 errors
+  ✓ npm run build                        → succeeds
+  ✓ Playwright smoke                     → all green
+  ✓ Playwright regression                → all green
+  ✓ Lightbox focus trap                  → verified
+  ✓ Comment rate-limit                   → 6th rapid post → 429
+  ✓ Thumb warmup ran at startup          → 55 thumbs cached
+  ✓ Pre-flight ports were free           → yes (or new ports announced)
+  ✓ Both servers backgrounded            → uvicorn + vite alive after current shell ends
+  ✓ Server logs written                  → .logs/uvicorn.log + .logs/vite.log exist
+  ✓ README.md present                    → yes (run + deploy instructions)
+  ✓ GET /api/healthz                     → 200
+  ✓ http://<frontend>/                   → 200
+  ✓ Browser console (full nav)           → 0 errors
+  ✓ Lighthouse Perf / A11y               → ≥ 75 / ≥ 90 (median of 3 runs)
+  ✓ gh repo view photography-dashboard   → exists
+  ✓ Latest commit pushed to main         → yes
+  ✓ CI workflow on main                  → started + no syntax errors in first 30s
+                                          (full green is monitored, not blocking the URL — a flaky runner shouldn't kill the demo)
+─────────────────────────────────────────────────────
+```
+
+If any gate is not green, **do not** print the URL. Print the failing gates and stop. I will tell you whether to retry or hand over an honest "not ready."
+
+---
+
+## §10 · URL handoff (final output of the run)
+
+When all gates pass, print exactly this block (substitute real URLs):
+
+```
+🟢 LIVE
+   Frontend  ·  http://localhost:5173/
+   API docs  ·  http://localhost:8000/docs
+   Repo      ·  https://github.com/<user>/photography-dashboard
+   CI        ·  https://github.com/<user>/photography-dashboard/actions
+
+   📁 Local path: /home/neo/Documents/photography-dashboard-application
+   📓 Workbook : .claude/workbooks/2026-05-01-photography-dashboard.md
+   📊 Graphify : graphify/index.html (open with `xdg-open`)
+   ⏱  Built in : <wall-clock minutes since plan approved>
+```
+
+**Server lifecycle (mandatory).** Start both servers as **background processes** so they survive past `/exit`:
+```bash
+mkdir -p .logs
+nohup uvicorn app.main:app --host 127.0.0.1 --port 8000 > .logs/uvicorn.log 2>&1 &
+echo $! > .logs/uvicorn.pid
+( cd web && nohup npm run preview -- --host 127.0.0.1 --port 5173 > ../.logs/vite.log 2>&1 & echo $! > ../.logs/vite.pid )
+```
+After printing the §10 block, tell me how to:
+- **Tail logs:**  `tail -f .logs/uvicorn.log .logs/vite.log`
+- **Stop everything:**  `kill $(cat .logs/uvicorn.pid .logs/vite.pid) 2>/dev/null && rm .logs/*.pid`
+- **Restart later:**  `bash scripts/dev.sh` (you also write this script — runs the two `nohup` lines above)
+
+---
+
+## §11 · Anti-patterns (explicit DON'Ts)
+
+- **Don't skip plan mode.** I will know.
+- **Don't import a library without verifying via Context7** when in doubt. Saying "I think it's `from foo import bar`" is hallucination. Look it up.
+- **Don't `git commit --no-verify`** or `--no-gpg-sign`. Hooks are there on purpose.
+- **Don't expose GPS in the API.** EXIF parsing must strip lat/lon before insertion. Comment in code why.
+- **Don't claim "polished" without Playwright proof.** Every UI claim in your final summary must be backed by a screenshot or assertion.
+- **Don't hand over the URL before all 14 gates green.** No exceptions.
+- **Don't over-engineer.** No microservices, no Postgres, no Docker for v1. If you feel the urge, take a breath and re-read this section.
+- **Don't waste tokens after plan approval.** Stop narrating. Execute. Use code-reviewer-generic instead of re-reading files.
+- **Don't commit secrets.** `.env`, `.env.*`, `*.pem`, credentials, API keys. The `pre_tool_use.sh` hook will block, but don't lean on it — write right the first time.
+- **Don't bundle the photographs into the git repo.** Add `photographs/` to `.gitignore` — they're personal media. The repo ships the *application*, not the data set. If a thumb cache is committed, that's also wrong: `.thumbs/` to `.gitignore` too.
+- **Don't fight the file system.** Use `fastapi.responses.FileResponse` for original bytes; don't read 4000×3000 JPEGs into memory and re-serialize.
+- **Don't pin to "latest" in `package.json` / `requirements.txt`.** Pin exact versions you've verified via Context7. A dep release mid-recording will burn 10 min of debugging.
+- **Don't lazy-only the thumb cache.** Run a thumb-warmup at server startup (`@app.on_event("startup")` async task) — generate any missing 400px thumbs for all 55 photos. First page load must not wait for 55 Pillow operations.
+- **Don't start servers in the foreground of your shell.** They die when the session ends. Use `nohup … &` per §10. Verify both PIDs are alive (`ps -p $(cat .logs/uvicorn.pid)`) before claiming green.
+- **Don't skip the README.** It must explain: prerequisites, `bash scripts/dev.sh` to start, stop command, where logs live, how to deploy elsewhere. A repo without a README is not "production-grade."
+- **Don't pollute system Python or conda base.** Every Python install goes into `.venv/`. If you catch yourself typing `pip install` without first sourcing `.venv/bin/activate`, stop. The user's machine has multiple Python environments — leakage between them is a real failure mode.
+- **Don't ship endpoints without OpenAPI annotations.** `summary=`, `description=`, response models, and status codes are mandatory. A bare `@app.get("/api/foo")` returning `dict` is a documentation smell.
+
+---
+
+## §12 · Token + wall-clock budget
+
+You have a 5-hour Opus rate-limit window. **Target ~60 minutes** of wall clock and ~70% of the token window. Discipline:
+
+- Use `superpowers:dispatching-parallel-agents` aggressively — backend + frontend + devops in one turn whenever inputs don't depend on each other.
+- **Visual QA via Playwright MCP runs SEQUENTIALLY at the end, never in parallel with implementation slices.** Implementation parallelizes; verification serializes. Three Playwright sessions running concurrently with three implementation agents will starve tokens.
+- Don't paste full file contents into chat for narration; cite `file:line` and let the reader pull it up.
+- Use `code-reviewer-generic` per slice — that agent reads files itself instead of you re-reading.
+- Reserve the **last 30 minutes** for the Playwright + Lighthouse + CI verification loop. Those iterate.
+- **45-minute pivot rule.** If 45 minutes have elapsed since plan approval and implementation isn't finished, stop adding scope. Drop nice-to-haves (sparkline → static count, donut → text "X landscape / Y portrait"). Ship the gates, not the chrome.
+- If a step balloons, *stop and ask me* before sinking another 20 minutes into it. I'd rather pivot than burn the budget.
+
+---
+
+## §13 · Brand + content placeholders (ask me in plan mode)
+
+Resolve these by asking me 3–5 sharp questions, batched, in plan mode:
+
+1. **Photographer display name** (default: `Saugata Paul · Photography`)
+2. **One-line tagline** under the name (default: `Light, lines, and the in-between.`)
+3. **Accent palette** — which of the three options in §5? (Amber Ember / Violet Dusk / Cyan Frost / other)
+4. **Repo visibility** — `private` (default for recording — flip to public after the demo) or `public`?
+5. **About paragraph** — one paragraph, or do I write it later? (default: a 2-line placeholder you generate, that I can swap)
+
+Don't ask about anything already decided in this brief.
+
+---
+
+## §14 · Closing directive
+
+You have everything. Begin pre-flight (§2) now. Then surface 3–5 clarifying questions (§13). Then enter plan mode and:
+
+1. Brainstorm the gallery-row strategy and the comment-anti-spam approach with me (§5, §7)
+2. Write the plan with verification gates (§3 layer protocol, §9 quality gates)
+3. Run the plan past Gemini for a red-team review
+4. Show me the plan + Gemini's critique
+5. Wait for my approval
+
+**Do not write a single line of code until I approve.**
+
+Once approved: dispatch in parallel, test red→green, commit continuously, run the Playwright + Lighthouse loop, gate the URL behind every check in §9. When everything is green, print the §10 block and the run is done.
+
+If at any point you're tempted to skip a step "to save time," remember: this is being recorded. The discipline is the demo.
+
+— Begin pre-flight.
+
+---
+
+## §15 · Failure-mode hardening (the last-5% mitigations)
+
+Real-world flake sources, ranked by likelihood, and the prompt-level countermeasure for each. Apply ALL of these — they're cheap and they compound.
+
+### 15.1 Network / package-registry blips
+- `npm ci` (not `npm install`) — uses `package-lock.json` byte-for-byte, no version drift.
+- `pip install --require-hashes -r requirements.txt` if you generate a `requirements.lock` via `pip-compile --generate-hashes`. Alternative: pin exact versions and `pip install --no-deps -r requirements.txt`.
+- Wrap any network call in a 3-attempt retry with exponential backoff (1s, 3s, 9s). A bash helper:
+  ```bash
+  retry() { for i in 1 2 3; do "$@" && return 0 || sleep $((i*i+1)); done; return 1; }
+  retry pip install -r requirements.txt
+  retry npm ci
+  retry gh release create v1.0.0 ...
+  ```
+
+### 15.2 GitHub API / Actions transients · how CI actually flows
+- Pin all action versions (`actions/checkout@v4`, not `@main`). Floating refs cause silent breakage.
+- Single-runner, single-Python, single-Node CI matrix — no fan-out. Matrix flakes are the leading cause of red builds.
+- Cache aggressively in CI (`actions/cache@v4` for `~/.cache/pip` and `~/.npm`). First run is slow; second run is reliable.
+- If `gh release create` returns 5xx, sleep 5s and retry once before giving up.
+
+**How CI gets bootstrapped (important — this is not magic):**
+1. *You* (Claude) write `.github/workflows/ci.yml` as one of your slices. Commit it. Push.
+2. GitHub Actions then auto-runs it on every subsequent push (and on the push that introduced the file).
+3. To verify CI is green, poll: `gh run list --repo saugatapaul1010/photography-dashboard --branch main --limit 1 --json status,conclusion,headSha,databaseId`. Wait until `status == "completed"` AND `conclusion == "success"` for the latest commit's SHA.
+4. The first run can take 60-120s for cold-start. Don't panic if it's queued for 30s.
+5. The §9 gate is "**workflow run STARTED, no syntax errors in first 30s**" — the URL handoff doesn't wait for full green (that arrives async, often after the recording ends). The repo URL in the §10 block points the user at `…/actions` so they can watch it land green themselves.
+
+A minimum viable `ci.yml` (you can extend, but ship at least this):
+
+```yaml
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - run: ruff check .
+      - run: pytest -q
+  frontend:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: web } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run build
+```
+
+### 15.3 Playwright snapshot flakes
+- `await page.waitForLoadState('networkidle')` before every screenshot.
+- `await page.evaluate(() => document.fonts.ready)` (font-loading is the #1 flake source for visual diffs).
+- `prefers-reduced-motion: reduce` honored in CSS — disables Framer animations during visual tests so frames are deterministic.
+- Mask `time`, `[data-volatile]`, and any randomly-ordered list during snapshots.
+- 2% pixel tolerance, not 1%.
+- Run visual tests at fixed viewport `1280x800`, `deviceScaleFactor: 1`. No mobile breakpoint visual tests in v1.
+
+### 15.4 Lighthouse score variance
+- Run 3 times, **take the median** — not best, not worst.
+- Use Lighthouse `desktop` preset, not `mobile` (more reliable scoring on a localhost build).
+- Disable browser extensions for the run (`--disable-extensions`).
+- Score below the gate? Show me the JSON report and the top 3 opportunities — don't silently retry forever.
+
+### 15.5 First-paint photo-load timeouts
+- Thumb warmup at server startup (already mandated §7) — verify with `ls .thumbs/ | wc -l` returning 55 before launching the frontend.
+- Frontend gallery uses `loading="lazy"` natively + `decoding="async"` on every `<img>`.
+- Set `<link rel="preload" as="image" href="...first-thumb...">` for the hero image.
+
+### 15.6 Console warning vs error noise
+- Playwright assertion: `expect(consoleErrors.length).toBe(0)` where `consoleErrors = msgs.filter(m => m.type() === 'error')`. Warnings don't block.
+- Suppress known-benign warnings explicitly via `console.error` override in dev only (don't ship to prod).
+
+### 15.7 Self-healing on transient failure
+- If a quality gate fails on the first run with a *transient* signature (network timeout, 502, port-already-in-use, "address already bound"), **automatically retry once** before reporting failure. Do not loop more than once per gate.
+- If a gate fails on the second attempt, **stop**. Print the failing gate, the diagnostic, and the most-likely root cause. Wait for me. Do not creatively work around it.
+
+### 15.8 Pre-flight registry warm-up
+The §2 pre-flight already pings pypi/npm/github API. If any return non-200, **abort early and tell me** — better to wait 2 min for the network to come back than start a build that will fail on `npm ci` 8 minutes in.
+
+### 15.9 Idempotent rerun
+If anything dies mid-run and I rerun this brief tomorrow:
+- `python3 -m venv .venv` is a no-op if `.venv/` exists
+- `pip install -r requirements.txt` re-resolves but doesn't re-download
+- `app.seed` is idempotent (sha256 dedup, see §7)
+- `gh repo create` returns "repo already exists" — catch and proceed
+- `git push` rebases instead of overwriting
+
+### 15.10 Time budget per verification gate
+| Gate | Soft limit | Hard limit |
+|---|---|---|
+| `pytest -q` | 30 s | 90 s |
+| `npm run build` | 60 s | 180 s |
+| Playwright smoke | 60 s | 180 s |
+| Playwright regression | 90 s | 240 s |
+| Lighthouse × 3 | 3 min | 6 min |
+| `gh release create` | 15 s | 60 s |
+
+If a gate exceeds the **hard limit**, kill it, mark the gate amber (not red), and continue to the next. Don't burn the run on a single sticky verification step.
+
+— End of brief.
+```
+{% endraw %}
+
+</div>
+</details>
+
 ## Get the setup
 
 The infrastructure half of this post is open-source. Two install paths:
