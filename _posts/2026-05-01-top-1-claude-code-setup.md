@@ -13,7 +13,7 @@ image: /diagrams/00-cover.png
 
 ---
 
-## Why this post exists
+## 1. Why this post exists.
 
 I had a small heart attack on a Sunday afternoon.
 
@@ -110,31 +110,32 @@ It is **not** "10 tips for better Claude Code." It is the entire stack as a sing
 
 ## Table of Contents
 
-- [Why this post exists](#why-this-post-exists)
-- [Layer 0 - What default Claude Code already gives you](#layer-0--what-default-claude-code-already-gives-you)
-- [Layer 1 - The safety net: hooks + permission deny rules](#layer-1--the-safety-net-hooks--permission-deny-rules)
-- [Layer 2 - The statusline: real-time awareness](#layer-2--the-statusline-real-time-awareness)
-- [Layer 3 - Memory architecture (CLAUDE.md → auto-memory → workbooks → archive)](#layer-3--memory-architecture)
-- [Layer 4 - Skills: the verbs](#layer-4--skills-the-verbs)
-- [Layer 5 - Agents: the specialists (and an HFT case study)](#layer-5--agents-the-specialists)
-- [Layer 6 - MCP servers: external minds](#layer-6--mcp-servers-external-minds)
-- [Layer 7 - The plugin ecosystem](#layer-7--the-plugin-ecosystem)
-- [Layer 8 - `project-bootstrap`: the day-1 workflow](#layer-8--project-bootstrap-the-day-1-workflow)
-- [Layer 9 - Backup, replication, and the portable kit](#layer-9--backup-replication-and-the-portable-kit)
-- [Layer 10 - A day in the life](#layer-10--a-day-in-the-life)
-- [Live demo: watch the system build a real app in under an hour](#live-demo-watch-the-system-build-a-real-app-in-under-an-hour)
-- [Best practices - the do's, the don'ts, and how the mechanism actually works](#best-practices--the-dos-the-donts-and-how-the-mechanism-actually-works)
-- [Key takeaways - what to remember if you only remember nine things](#key-takeaways--what-to-remember-if-you-only-remember-nine-things)
-- [Appendix A - Full file index](#appendix-a--full-file-index)
-- [Appendix B - Troubleshooting](#appendix-b--troubleshooting)
-- [Appendix C - Extending with your own custom agent / skill / MCP](#appendix-c--extending)
-- [Closing - what it costs, what it doesn't, what's next](#closing)
-- [Get the setup](#get-the-setup)
-- [Got a better idea? Tell me.](#got-a-better-idea-tell-me)
+- [1. Why this post exists.](#1-why-this-post-exists)
+- [2. Layer 0 - What default Claude Code already gives you.](#2-layer-0---what-default-claude-code-already-gives-you)
+- [3. Layer 1 - The safety net: hooks + permission deny rules.](#3-layer-1---the-safety-net-hooks--permission-deny-rules)
+- [4. Layer 2 - The statusline: real-time awareness.](#4-layer-2---the-statusline-real-time-awareness)
+- [5. Layer 3 - Memory architecture.](#5-layer-3---memory-architecture)
+- [6. Layer 4 - Skills: the verbs.](#6-layer-4---skills-the-verbs)
+- [7. Layer 5 - Agents: the specialists.](#7-layer-5---agents-the-specialists)
+- [8. Layer 6 - MCP servers: external minds.](#8-layer-6---mcp-servers-external-minds)
+- [9. Layer 7 - The plugin ecosystem.](#9-layer-7---the-plugin-ecosystem)
+- [10. Layer 8 - `project-bootstrap`: the day-1 workflow.](#10-layer-8---project-bootstrap-the-day-1-workflow)
+- [11. Layer 9 - Backup, replication, and the portable kit.](#11-layer-9---backup-replication-and-the-portable-kit)
+- [12. Layer 10 - A day in the life.](#12-layer-10---a-day-in-the-life)
+- [13. Live demo: watch the system build a real app in under an hour.](#13-live-demo-watch-the-system-build-a-real-app-in-under-an-hour)
+- [14. Best practices - the do's, the don'ts, and how the mechanism actually works.](#14-best-practices---the-dos-the-donts-and-how-the-mechanism-actually-works)
+- [15. Key takeaways - what to remember if you only remember nine things.](#15-key-takeaways---what-to-remember-if-you-only-remember-nine-things)
+- [16. Appendix A - Full file index.](#16-appendix-a---full-file-index)
+- [17. Appendix B - Troubleshooting.](#17-appendix-b---troubleshooting)
+- [18. Appendix C - Extending with your own custom agent / skill / MCP.](#18-appendix-c---extending-with-your-own-custom-agent--skill--mcp)
+- [19. Closing.](#19-closing)
+- [20. Get the setup.](#20-get-the-setup)
+- [21. Thank you, and a few names.](#21-thank-you-and-a-few-names)
+- [22. Got a better idea? Tell me.](#22-got-a-better-idea-tell-me)
 
 ---
 
-## Layer 0 - What default Claude Code already gives you
+## 2. Layer 0 - What default Claude Code already gives you.
 
 Before we put anything on top, let's be fair to what Anthropic ships in the box. Default Claude Code is *good*. I shipped real production code with nothing but the defaults for the entire first month. If you're reading this on day one of using Claude, please don't drop everything and go install the full kit. Use the defaults. Get bitten by them. Then come back when you can feel where the floor is missing.
 
@@ -184,7 +185,7 @@ If a layer below doesn't give you both, it's not pulling its weight.
 
 ---
 
-## Layer 1 - The safety net: hooks + permission deny rules
+## 3. Layer 1 - The safety net: hooks + permission deny rules.
 
 This is the layer that pays for itself the moment something goes wrong.
 
@@ -419,7 +420,7 @@ The hook should refuse all four destructive variants. If any get through, your h
 
 ---
 
-## Layer 2 - The statusline: real-time awareness
+## 4. Layer 2 - The statusline: real-time awareness.
 
 The default Claude Code statusline shows what you're using and where you are. Mine shows everything I need to make decisions in real time.
 
@@ -502,7 +503,7 @@ The 223 lines of `statusline.sh` are in the kit at `~/Desktop/Claude_Total_Repli
 
 ---
 
-## Layer 3 - Memory architecture
+## 5. Layer 3 - Memory architecture.
 
 Claude Code has more memory than people realize. It's just spread across four places, and most users only know about one.
 
@@ -795,7 +796,7 @@ Without Layer 3, Layer 5 would not work. The specialists would each spin up with
 
 ---
 
-## Layer 4 - Skills: the verbs
+## 6. Layer 4 - Skills: the verbs.
 
 Skills are procedural recipes. When you (or Claude) invoke a skill, its content is loaded into context and Claude follows it directly. Think of them as mini-prompts attached to a name and a `description` field.
 
@@ -951,7 +952,7 @@ The bar: would a skill make Claude meaningfully *better at a category of work*? 
 
 ---
 
-## Layer 5 - Agents: the specialists
+## 7. Layer 5 - Agents: the specialists.
 
 Skills are verbs. Agents are nouns. When the task fits a specialist's expertise better than a generalist's, you dispatch the specialist.
 
@@ -1139,7 +1140,7 @@ If your project has subsystems with genuinely different reasoning requirements, 
 
 ---
 
-## Layer 6 - MCP servers: external minds
+## 8. Layer 6 - MCP servers: external minds.
 
 The Model Context Protocol (MCP) is Anthropic's interface for plugging external systems into Claude as first-class tools. You write or install an MCP server; Claude can call its tools as naturally as `Read` or `Bash`.
 
@@ -1361,7 +1362,7 @@ If any show `! Needs authentication` or `× Failed`, fix that one before moving 
 
 ---
 
-## Layer 7 - The plugin ecosystem
+## 9. Layer 7 - The plugin ecosystem.
 
 Plugins are bundles. A plugin can ship skills, agents, slash commands, hooks, and MCP server configs together. The Claude Code plugin marketplace lets you install official + community bundles with one command.
 
@@ -1463,7 +1464,7 @@ The bar to add a plugin is the same as the bar to add a skill: does it make Clau
 
 ---
 
-## Layer 8 - `project-bootstrap`: the day-1 workflow
+## 10. Layer 8 - `project-bootstrap`: the day-1 workflow.
 
 Layer 7 gave you the palette of plugins; Layer 8 is the mechanism that stamps those conventions onto every new project you start. Starting a fresh repo should not mean re-explaining your conventions to Claude every time. One command, three questions, a fully-conventioned scaffold.
 
@@ -1645,7 +1646,7 @@ If you come back tomorrow and ask "what did we do for feature X?", Claude finds 
 
 ---
 
-## Layer 9 - Backup, replication, and the portable kit
+## 11. Layer 9 - Backup, replication, and the portable kit.
 
 Let me tell you about the Friday my laptop died.
 
@@ -1892,7 +1893,7 @@ My bundled `settings.json` sets `"skipDangerousModePermissionPrompt": true` and 
 
 ---
 
-## Layer 10 - A day in the life
+## 12. Layer 10 - A day in the life.
 
 ![A day in the life](/diagrams/09-weekly-composition.png)
 
@@ -1972,7 +1973,7 @@ The layers stack: the safety net protects you, the statusline informs you, the m
 
 ---
 
-## Live demo: watch the system build a real app in under an hour
+## 13. Live demo: watch the system build a real app in under an hour.
 
 The post above describes the *infrastructure*. This section shows the *workflow* — what happens when that infrastructure is pointed at a brand-new project.
 
@@ -2000,7 +2001,7 @@ The full `PROJECT_BRIEF.md` lives in the open-source repo: **[`examples/photogra
 > ```
 
 
-## Best practices - the do's, the don'ts, and how the mechanism actually works
+## 14. Best practices - the do's, the don'ts, and how the mechanism actually works.
 
 Before the closing, a working developer's reference card. These are the patterns I keep coming back to, distilled from two-plus years of watching the setup do well and watching it do badly. Use this section as the lookup table you'd staple to your monitor.
 
@@ -2055,7 +2056,7 @@ This is why the archive uses `cp -n` (no overwrite) and `set -uo pipefail` delib
 
 ---
 
-## Key takeaways - what to remember if you only remember nine things
+## 15. Key takeaways - what to remember if you only remember nine things.
 
 If you remember only nine things from this entire post, let it be these:
 
@@ -2071,7 +2072,7 @@ If you remember only nine things from this entire post, let it be these:
 
 ---
 
-## Appendix A - Full file index
+## 16. Appendix A - Full file index.
 
 Every file the kit drops on your machine, with a one-line purpose. Use this as a "what is this file again?" reference.
 
@@ -2130,7 +2131,7 @@ Every file the kit drops on your machine, with a one-line purpose. Use this as a
 
 ---
 
-## Appendix B - Troubleshooting
+## 17. Appendix B - Troubleshooting.
 
 **Hooks aren't firing.**
 Check three things: (1) `chmod +x ~/.claude/hooks/*.sh` - tar can lose the executable bit; (2) the path in `settings.json` uses `~` (Claude Code expands it) not `$HOME` (which it doesn't); (3) `claude` is being launched from the right shell - your hook depends on `jq` and `git` being on PATH.
@@ -2178,7 +2179,7 @@ Something in your stable prefix (system prompt, CLAUDE.md, auto-memory index, sk
 
 ---
 
-## Appendix C - Extending
+## 18. Appendix C - Extending with your own custom agent / skill / MCP.
 
 ### Adding your own custom agent
 
@@ -2262,7 +2263,7 @@ That's it. Your tools are now first-class in Claude Code.
 
 ---
 
-## Closing
+## 19. Closing.
 
 ### What does this stack cost?
 
@@ -2309,8 +2310,6 @@ If you have made it this far, you are either building this or deciding whether t
 
 If you have made it this far, thank you. I know it was long. The whole thing took me six months to build and one weekend to write up - and honestly the writeup was the harder part.
 
-Massive thanks to the people whose work I have stood on top of: **Andrej Karpathy**, whose four discipline rules (think before coding · simplicity first · surgical changes · goal-driven execution) run through every layer of this post; and **Anthropic's engineering team**, who built Claude Code itself plus the plugin marketplace and the skills system that made all of this possible.
-
 If you build on this, please tell me. If you build something *better* than this, please tell me louder. My email is in the byline below. I read every message and I would much rather hear "your hook script broke on my Mac, here's the fix" than another LinkedIn DM. The whole field is figuring this out at the same time, and good setups should be public.
 
 Build something good with it.
@@ -2319,7 +2318,7 @@ Build something good with it.
 
 ---
 
-## Get the setup
+## 20. Get the setup.
 
 The infrastructure half of this post is open-source. Two install paths:
 
@@ -2349,7 +2348,15 @@ Repo: [github.com/saugatapaul1010/claude-code-top1-setup](https://github.com/sau
 
 ---
 
-## Got a better idea? Tell me.
+## 21. Thank you, and a few names.
+
+If you have made it this far, thank you. I know it was long.
+
+Massive thanks to the people whose work I have stood on top of: **Andrej Karpathy**, whose four discipline rules (think before coding · simplicity first · surgical changes · goal-driven execution) run through every layer of this post; and **Anthropic's engineering team**, who built Claude Code itself plus the plugin marketplace and the skills system that made all of this possible.
+
+---
+
+## 22. Got a better idea? Tell me.
 
 This post is one engineer's working setup, frozen on a particular Sunday afternoon. **It will be wrong about something.** It will be missing something obvious that you've already solved. It will quietly assume something that doesn't hold for your stack.
 
