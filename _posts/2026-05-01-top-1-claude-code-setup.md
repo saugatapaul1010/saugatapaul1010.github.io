@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "The Top-1% Claude Code Setup: A Complete Foundation for Any Project"
-date: 2026-04-26
+date: 2026-05-01
 author: Saugata Paul
 tags: [claude-code, ai-coding, llms, developer-tools, agentic-ai, productivity]
 image: /diagrams/00-cover.png
