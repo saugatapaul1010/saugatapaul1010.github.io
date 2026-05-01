@@ -1,0 +1,136 @@
+<style>
+/* ─────────────────────────────────────────────────────────────────
+   Custom typography + section spacing overrides
+   Goal: each heading is visibly bold with generous vertical breathing
+   room from the preceding section, so the eye finds new sections fast.
+   ───────────────────────────────────────────────────────────────── */
+
+.post-content {
+  /* slightly more line-height for paragraphs */
+  line-height: 1.65;
+}
+
+/* ── H1 (post title is rendered by minima outside .post-content;
+       in-body H1 is rare in our posts) ── */
+.post-content h1 {
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-top: 3.2em;
+  margin-bottom: 0.8em;
+  padding-top: 0.4em;
+  border-top: 2px solid rgba(0,0,0,0.08);
+}
+
+/* ── H2 (every "## Layer X", "## Closing", "## Appendix A", etc.) ── */
+.post-content h2 {
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  margin-top: 2.8em;
+  margin-bottom: 0.7em;
+  padding-top: 0.6em;
+  border-top: 1px solid rgba(0,0,0,0.10);
+}
+
+/* First H2 in the article shouldn't have a giant top margin
+   (it's the "Why this post exists" right after the cover image). */
+.post-content > h2:first-child,
+.post-content > h2:first-of-type {
+  margin-top: 1.5em;
+  padding-top: 0;
+  border-top: none;
+}
+
+/* ── H3 (subsections like "## 1. Ground-truth order (mandatory)" or
+       any "###" sub-heading inside layers) ── */
+.post-content h3 {
+  font-weight: 700;
+  margin-top: 2em;
+  margin-bottom: 0.5em;
+}
+
+/* ── H4 + smaller — keep tight but bold ── */
+.post-content h4,
+.post-content h5,
+.post-content h6 {
+  font-weight: 700;
+  margin-top: 1.6em;
+  margin-bottom: 0.4em;
+}
+
+/* ── Paragraph breathing room ── */
+.post-content p {
+  margin-bottom: 1.1em;
+}
+
+/* ── Lists: a bit more breathing between items in a 3-asks list ── */
+.post-content ul,
+.post-content ol {
+  margin-bottom: 1.3em;
+}
+.post-content li {
+  margin-bottom: 0.4em;
+}
+
+/* ── Code blocks: more vertical air ── */
+.post-content pre,
+.post-content figure.highlight {
+  margin-top: 1.2em;
+  margin-bottom: 1.6em;
+}
+
+/* ── Block quotes: separate visually ── */
+.post-content blockquote {
+  margin-top: 1.4em;
+  margin-bottom: 1.6em;
+  font-style: italic;
+}
+
+/* ── Horizontal rule = section separator. Pad it. ── */
+.post-content hr {
+  margin-top: 2.4em;
+  margin-bottom: 2.4em;
+  border: 0;
+  border-top: 1px solid rgba(0,0,0,0.10);
+}
+
+/* ── Tables: a bit more breathing ── */
+.post-content table {
+  margin-top: 1em;
+  margin-bottom: 1.6em;
+}
+
+/* ── Anchor offset so clicking a TOC link doesn't hide the heading
+       under the (potentially) sticky header ── */
+.post-content h1,
+.post-content h2,
+.post-content h3,
+.post-content h4 {
+  scroll-margin-top: 1.5em;
+}
+
+/* ── Images: extra top margin so the diagram doesn't kiss the
+       paragraph above it ── */
+.post-content p > img,
+.post-content > img {
+  margin-top: 1.2em;
+  margin-bottom: 1.4em;
+  border-radius: 6px;
+}
+
+/* ── Make the figure/image standalone block respect horizontal centering ── */
+.post-content figure {
+  margin: 1.4em 0 1.6em 0;
+}
+
+/* ── Slightly larger H2 so it visibly anchors a new section ── */
+.post-content h2 {
+  font-size: 1.85em;
+}
+
+/* ── On wide screens, give the post body a bit more side gutter ── */
+@media (min-width: 900px) {
+  .post-content {
+    padding: 0 0.5rem;
+  }
+}
+</style>
