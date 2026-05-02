@@ -2001,6 +2001,23 @@ The full `PROJECT_BRIEF.md` lives in the open-source repo: **[`examples/photogra
 > curl -L https://raw.githubusercontent.com/saugatapaul1010/claude-code-top1-setup/main/examples/photography-dashboard/PROJECT_BRIEF.md > PROJECT_BRIEF.md
 > ```
 
+### Watch it build (full 84-minute recording)
+
+<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; margin: 1.4em 0; border-radius: 8px;">
+  <iframe
+    src="https://www.youtube-nocookie.com/embed/pMT-NCdyrIA?vq=hd1080&rel=0&modestbranding=1"
+    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"
+    title="Top-1% Claude Code Setup - Fully Autonomous Software Development (one prompt, 84 minutes, live)"
+    loading="lazy"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+    referrerpolicy="strict-origin-when-cross-origin"
+    allowfullscreen>
+  </iframe>
+</div>
+
+**A note on the recording.** The video above is the full, **uninterrupted, single-take** session - every minute of what Claude does between paste-the-prompt and click-the-link. **It runs ~84 minutes.** That length is the point: you can see exactly where the brainstorming skill pauses to surface tradeoffs, where Gemini's MCP red-team comes back with criticism, where three specialist agents fan out in parallel for the implementation, where Playwright walks the page asserting visual correctness, and where the 23 quality gates flip green one by one. No edits, no cuts, no time-lapse - the long bits are long because real engineering is long. Audio has been muted intentionally so you can read the screen at your own pace.
+
+**If you only have a minute:** jump to **[1:21:00](https://youtu.be/pMT-NCdyrIA?t=4860)**. That timestamp is where Claude finishes, hands over the localhost URL, and the finished photographer's portfolio app - built end-to-end from a single prompt with zero clicks beyond plan approval - opens in the browser for the live product review. **Everything you see at and after 1:21:00 is the deliverable** of one prompt + zero further input.
 
 ## 14. Best practices - the do's, the don'ts, and how the mechanism actually works.
 
